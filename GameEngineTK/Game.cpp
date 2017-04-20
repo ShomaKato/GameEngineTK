@@ -4,23 +4,14 @@
 
 #include "pch.h"
 #include "Game.h"
-#include <PrimitiveBatch.h>
-#include <VertexTypes.h>
-#include <Effects.h>
-#include <CommonStates.h>
-#include <SimpleMath.h>
 
 extern void ExitGame();
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
+using namespace std;
 
 using Microsoft::WRL::ComPtr;
-
-// 応急処置的グローバル関数
-std::unique_ptr<PrimitiveBatch<VertexPositionColor>> primitiveBatch;
-std::unique_ptr<BasicEffect> basicEffect;
-ComPtr<ID3D11InputLayout> inputLayout;
 
 
 Game::Game() :
@@ -51,34 +42,41 @@ void Game::Initialize(HWND window, int width, int height)
 
 	// 初期化はここに追加する
 	// プリミティブバッチの作成
-	//std::unique_ptr<PrimitiveBatch<VertexPositionColor>> primitiveBatch;							/* unique_ptrはスマートポインタの一種。deleteを自動でやってくれる */
-																									/*Renderで使う応急処置としてグローバル関数に*/
-	primitiveBatch = std::make_unique<PrimitiveBatch<VertexPositionColor>>(m_d3dContext.Get());		/* make_uniqueはポインタのnewにあたるもの */
+	m_effect = std::make_unique<BasicEffect>(m_d3dDevice.Get());					/* unique_ptrはスマートポインタの一種。deleteを自動でやってくれる */		
+																					/* Get()は、ユニークポインタを普通のポインタに変換するための関数 */
+
+	// ワールド行列の初期化？
+	m_world = Matrix::Identity;
+
+	// ビュー行列と射影行列の設定
+	m_view = Matrix::CreateLookAt(Vector3(2.f, 2.f, 2.f),
+		Vector3::Zero, Vector3::UnitY);
+	m_proj = Matrix::CreatePerspectiveFieldOfView(XM_PI / 4.f,
+		float(m_outputWidth) / float(m_outputHeight), 0.1f, 10.f);
 
 
-	// ベーシックエフェクトの作成
-	//std::unique_ptr<BasicEffect> basicEffect;														// Renderで使う応急処置としてグローバル関数に
-	//ComPtr<ID3D11InputLayout> inputLayout;
-
-	basicEffect = std::make_unique<BasicEffect>(m_d3dDevice.Get());									/* Get()は、ユニークポインタを普通のポインタに変換するための関数 */
-
-	basicEffect->SetProjection(XMMatrixOrthographicOffCenterRH(0,
+	// ベーシックエフェクトの作成・初期化					
+	m_effect->SetProjection(XMMatrixOrthographicOffCenterRH(0,
 		m_outputWidth, m_outputHeight, 0, 0, 1));
-	basicEffect->SetVertexColorEnabled(true);
+	m_effect->SetVertexColorEnabled(true);
 
 	void const* shaderByteCode;
 	size_t byteCodeLength;
 
-	basicEffect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
+	m_effect->GetVertexShaderBytecode(&shaderByteCode, &byteCodeLength);
 
 	m_d3dDevice->CreateInputLayout(VertexPositionColor::InputElements,
 		VertexPositionColor::InputElementCount,
 		shaderByteCode, byteCodeLength,
-		inputLayout.GetAddressOf());
+		m_inputLayout.GetAddressOf());
+
+	// プリミティブバッチの作成・初期化
+	m_batch = std::make_unique<PrimitiveBatch<VertexPositionColor>>(m_d3dContext.Get());
+
+	// デバッグカメラの作成
+	m_debugCamera = make_unique<DebugCamera>(m_outputWidth, m_outputHeight);
 
 	//=====ここまでで、初期化設定は完了=====//
-
-
 }
 
 // Executes the basic game loop.
@@ -101,6 +99,12 @@ void Game::Update(DX::StepTimer const& timer)
     elapsedTime;
 
 	// 毎フレーム更新処理はここに追加する
+
+	// デバックガメラを毎フレーム更新
+	m_debugCamera->Update();
+	// ビュー行列を取得
+	m_view = m_debugCamera->GetCameraMatrix();
+
 }
 
 // Draws the scene.
@@ -116,16 +120,23 @@ void Game::Render()
 
     // TODO: Add your rendering code here.
 	// 毎フレーム描画処理はここに追加する
-	CommonStates states(m_d3dDevice.Get());
-	m_d3dContext->OMSetBlendState(states.Opaque(), nullptr, 0xFFFFFFFF);
-	m_d3dContext->OMSetDepthStencilState(states.DepthNone(), 0);
-	m_d3dContext->RSSetState(states.CullNone());
 
-	basicEffect->Apply(m_d3dContext.Get());
-	m_d3dContext->IASetInputLayout(inputLayout.Get());
+	DirectX::CommonStates m_states(m_d3dDevice.Get());			/* さっきまでメンバ変数だったのでm_になっているが気にしない。カッコ内は初期化処理 */
 
-	primitiveBatch->Begin();
-	primitiveBatch->DrawLine(
+	m_d3dContext->OMSetBlendState(m_states.Opaque(), nullptr, 0xFFFFFFFF);
+	m_d3dContext->OMSetDepthStencilState(m_states.DepthNone(), 0);
+	m_d3dContext->RSSetState(m_states.CullNone());
+
+	// ベーシックエフェクトに各行列をセット
+	m_effect->SetWorld(m_world);								/* ワールド行列さえあれば表示はされる。が、デバッグカメラ使用のためにビュー行列と射影行列も必要 */
+	m_effect->SetView(m_view);
+	m_effect->SetProjection(m_proj);
+
+	m_effect->Apply(m_d3dContext.Get());
+	m_d3dContext->IASetInputLayout(m_inputLayout.Get());
+
+	m_batch->Begin();
+	m_batch->DrawLine(
 		VertexPositionColor(
 			Vector3(0, 0, 0),
 			Color(1, 1, 1)),
@@ -134,7 +145,14 @@ void Game::Render()
 			Color(1, 1, 1))
 	);
 
-	primitiveBatch->End();
+	// 三角形を描画する処理
+	VertexPositionColor v1(Vector3(0.5f, 0.5f, 0.5f), Colors::Yellow);
+	VertexPositionColor v2(Vector3(0.5f, -0.5f, 0.5f), Colors::Yellow);
+	VertexPositionColor v3(Vector3(-0.5f, -0.5f, 0.5f), Colors::Yellow);
+
+	m_batch->DrawTriangle(v1, v2, v3);
+
+	m_batch->End();
 
     Present();
 }
