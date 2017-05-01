@@ -93,10 +93,14 @@ private:
 	std::unique_ptr<DirectX::Model> m_PRACTICALballModel;
 	std::unique_ptr<DirectX::Model> m_ballModel;
 
+	std::unique_ptr<DirectX::Model> m_potModel;
+
 	//* 球のワールド行列（練習）
 	DirectX::SimpleMath::Matrix m_PRACTICALballWorld;
 	//* 球のワールド行列（本番）
 	DirectX::SimpleMath::Matrix m_ballWorld[20];
+	//* ティーポットのワールド行列
+	DirectX::SimpleMath::Matrix m_potWorld[20];
 
 
 	//* 天球ズの回転量

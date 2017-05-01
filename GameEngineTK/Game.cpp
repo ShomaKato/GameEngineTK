@@ -87,7 +87,7 @@ void Game::Initialize(HWND window, int width, int height)
 
 	// 地面モデルの読み込み
 	m_groundModel = Model::CreateFromCMO(m_d3dDevice.Get(), 
-									L"Resources\\ground1m.cmo", 
+									L"Resources\\ground200m.cmo", 
 									*m_factory);	
 	// 天球モデルの読み込み
 	m_skydomeModel = Model::CreateFromCMO(m_d3dDevice.Get(),
@@ -97,6 +97,11 @@ void Game::Initialize(HWND window, int width, int height)
 	// 球並べるやつ・20回読み込む
 	m_ballModel = Model::CreateFromCMO(m_d3dDevice.Get(),
 		(L"Resources\\ball.cmo"),
+		*m_factory);
+
+	// ティーポット並べるやつ・20回読み込む
+	m_potModel = Model::CreateFromCMO(m_d3dDevice.Get(),
+		(L"Resources\\edfPot.cmo"),
 		*m_factory);
 
 	rollingAmount = 0.0f;
@@ -164,8 +169,6 @@ void Game::Update(DX::StepTimer const& timer)
 
 	for (int i = 0; i < 10; i++)
 	{
-
-
 		// 回転
 		Matrix rotmatsZ1 = Matrix::CreateRotationZ(0.0f);
 		Matrix rotmatsX1 = Matrix::CreateRotationX(0.0f);
@@ -187,9 +190,33 @@ void Game::Update(DX::StepTimer const& timer)
 		m_ballWorld[i + 10] = transmats2 * rotmats[i + 10];
 	}
 
-	//* 1フレームごとにある程度回す
-	rollingAmount += 0.01f;
+	////* 1フレームごとにある程度回す
+	//rollingAmount += 0.01f;
 
+	//=======================================ティーポット============================================//
+
+	//* 平行移動の配列
+	Matrix transPot[20];
+
+	for (int i = 0; i < 20; i++)
+	{
+		//* 回転
+		Matrix rotPotZ = Matrix::CreateRotationZ(0.0f);
+		Matrix rotPotX = Matrix::CreateRotationX(0.0f);
+		Matrix rotPotY = Matrix::CreateRotationY(XMConvertToRadians(rollingAmount));
+		Matrix rotPot = rotPotZ*rotPotX*rotPotY;
+
+		//* 平行移動
+		transPot[i] = Matrix::CreateTranslation(cosf(rand() % 360 + 1) * 200,
+												0.0f, 
+												sinf(rand() % 360 + 1) * 200);
+
+		m_potWorld[i] = transPot[i] * rotPot;
+
+		//* 1フレームごとにある程度回す
+		rollingAmount += 0.01f;
+
+	}
 }
 
 // Draws the scene.
@@ -224,7 +251,7 @@ void Game::Render()
 	// 地面モデルの描画			/* cmoモデルはプリミティブバッチ不要 */
 	m_groundModel->Draw(m_d3dContext.Get(), 
 		m_states,
-		m_world, 
+		Matrix::Identity, 
 		m_view, 
 		m_proj);
 
@@ -242,17 +269,25 @@ void Game::Render()
 	//	m_view,
 	//	m_proj);
 
-	// ボールを二十個並べ隊
+	//// ボールを二十個並べ隊
+	//for (int i = 0; i < 20; i++)
+	//{
+	//	m_ballModel->Draw(m_d3dContext.Get(),
+	//		m_states,
+	//		m_ballWorld[i],
+	//		m_view,
+	//		m_proj);
+	//}
+
+	// ティーポットも二十個並べ隊
 	for (int i = 0; i < 20; i++)
 	{
-		m_ballModel->Draw(m_d3dContext.Get(),
+		m_potModel->Draw(m_d3dContext.Get(),
 			m_states,
-			m_ballWorld[i],
+			m_potWorld[i],
 			m_view,
 			m_proj);
 	}
-
-
 
 	m_batch->Begin();
 
