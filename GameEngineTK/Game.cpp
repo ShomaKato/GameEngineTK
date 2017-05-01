@@ -14,6 +14,7 @@ using namespace std;
 using Microsoft::WRL::ComPtr;
 
 
+
 Game::Game() :
     m_window(0),
     m_outputWidth(800),
@@ -45,14 +46,17 @@ void Game::Initialize(HWND window, int width, int height)
 	m_effect = std::make_unique<BasicEffect>(m_d3dDevice.Get());					/* unique_ptrはスマートポインタの一種。deleteを自動でやってくれる */		
 																					/* Get()は、ユニークポインタを普通のポインタに変換するための関数 */
 
-	// ワールド行列の初期化？
+	// ワールド行列の初期化？		/* 追記：Identifyは単位行列。まあつまり初期化でおｋ */
 	m_world = Matrix::Identity;
 
 	// ビュー行列と射影行列の設定
 	m_view = Matrix::CreateLookAt(Vector3(2.f, 2.f, 2.f),
 		Vector3::Zero, Vector3::UnitY);
 	m_proj = Matrix::CreatePerspectiveFieldOfView(XM_PI / 4.f,
-		float(m_outputWidth) / float(m_outputHeight), 0.1f, 10.f);
+		float(m_outputWidth) / float(m_outputHeight),
+		0.1f,	
+		500.f)
+		;
 
 
 	// ベーシックエフェクトの作成・初期化					
@@ -75,6 +79,27 @@ void Game::Initialize(HWND window, int width, int height)
 
 	// デバッグカメラの作成
 	m_debugCamera = make_unique<DebugCamera>(m_outputWidth, m_outputHeight);
+
+	// エフェクトファクトリを生成
+	m_factory = std::make_unique<EffectFactory>(m_d3dDevice.Get());
+	// テクスチャの読み込みパス指定		/* ここからテクスチャを読み込みますよ、という意味に */
+	m_factory->SetDirectory(L"Resources");
+
+	// 地面モデルの読み込み
+	m_groundModel = Model::CreateFromCMO(m_d3dDevice.Get(), 
+									L"Resources\\ground1m.cmo", 
+									*m_factory);	
+	// 天球モデルの読み込み
+	m_skydomeModel = Model::CreateFromCMO(m_d3dDevice.Get(),
+		L"Resources\\SkyDome.cmo",
+		*m_factory);
+
+	// 球並べるやつ・20回読み込む
+	m_ballModel = Model::CreateFromCMO(m_d3dDevice.Get(),
+		(L"Resources\\ball.cmo"),
+		*m_factory);
+
+	rollingAmount = 0.0f;
 
 	//=====ここまでで、初期化設定は完了=====//
 }
@@ -104,6 +129,66 @@ void Game::Update(DX::StepTimer const& timer)
 	m_debugCamera->Update();
 	// ビュー行列を取得
 	m_view = m_debugCamera->GetCameraMatrix();
+
+	//=====================球のワールド行列を計算（アップデートでやる）==========================//
+
+	//* スケーリング		/* (倍率) */
+	Matrix scalemat = Matrix::CreateScale(0.1f);
+
+	//* 回転				/* Z,X,Yの順番で一個ずつでなければダメな上にラジアン */
+	// 旋回
+	Matrix rotmatZ = Matrix::CreateRotationZ(XM_PIDIV4);							/* 1/4π */
+	// 仰角
+	Matrix rotmatX = Matrix::CreateRotationX(XMConvertToRadians(15.0f));			/* 度数への変換関数 */
+	// 方位角
+	Matrix rotmatY = Matrix::CreateRotationY(XM_1DIVPI);							/* ちなみにDIVの方が細かく計算できるらしい */
+	// 回転行列の合成
+	Matrix rotmat = rotmatZ * rotmatX * rotmatY;
+
+	//* 平行移動	/* (X軸,Y軸,Z軸) */
+	Matrix transmat = Matrix::CreateTranslation(1.0f, 2.0f, 0.0f);
+
+
+	// ワールド行列の合成			/* 必ずSRTの順で掛け合わせる */
+	m_PRACTICALballWorld = scalemat * rotmat * transmat;
+
+
+	//===========================================================================================//
+
+	//=======================================上の本番============================================//
+
+	//* 平行移動	/* こっちを先に掛けて短縮化を図る */
+	Matrix transmats1 = Matrix::CreateTranslation(20.0f, 0.0f, 0.0f);			/* 冷静に考えたら平行移動の行列は二個でよかったので、for文の外に */
+	Matrix transmats2 = Matrix::CreateTranslation(40.0f, 0.0f, 0.0f);
+	Matrix rotmats[20];
+
+	for (int i = 0; i < 10; i++)
+	{
+
+
+		// 回転
+		Matrix rotmatsZ1 = Matrix::CreateRotationZ(0.0f);
+		Matrix rotmatsX1 = Matrix::CreateRotationX(0.0f);
+		Matrix rotmatsY1 = Matrix::CreateRotationY(XMConvertToRadians(36.0f * i));
+		Matrix rotmatsY2 = Matrix::CreateRotationY(XMConvertToRadians(36.0f * i));
+
+	
+			rotmatsY1 = Matrix::CreateRotationY(XMConvertToRadians(36.0f * i) + rollingAmount);
+		
+			rotmatsY2 = Matrix::CreateRotationY(XMConvertToRadians(36.0f * i) - rollingAmount);
+		
+
+		rotmats[i] = rotmatsZ1 * rotmatsX1 * rotmatsY1;
+
+		// ワールド行列の合成
+		m_ballWorld[i] = transmats1 * rotmats[i];
+		// 10～19は外側
+		rotmats[i +10] = rotmatsY2;
+		m_ballWorld[i + 10] = transmats2 * rotmats[i + 10];
+	}
+
+	//* 1フレームごとにある程度回す
+	rollingAmount += 0.01f;
 
 }
 
@@ -135,15 +220,50 @@ void Game::Render()
 	m_effect->Apply(m_d3dContext.Get());
 	m_d3dContext->IASetInputLayout(m_inputLayout.Get());
 
+
+	// 地面モデルの描画			/* cmoモデルはプリミティブバッチ不要 */
+	m_groundModel->Draw(m_d3dContext.Get(), 
+		m_states,
+		m_world, 
+		m_view, 
+		m_proj);
+
+	// 天球モデルの描画
+	m_skydomeModel->Draw(m_d3dContext.Get(),
+		m_states,
+		m_world,
+		m_view,
+		m_proj);
+
+	//// ボールモデルの描画（練習）
+	//m_PRACTICALballModel->Draw(m_d3dContext.Get(),
+	//	m_states,
+	//	m_PRACTICALballWorld,
+	//	m_view,
+	//	m_proj);
+
+	// ボールを二十個並べ隊
+	for (int i = 0; i < 20; i++)
+	{
+		m_ballModel->Draw(m_d3dContext.Get(),
+			m_states,
+			m_ballWorld[i],
+			m_view,
+			m_proj);
+	}
+
+
+
 	m_batch->Begin();
-	m_batch->DrawLine(
-		VertexPositionColor(
-			Vector3(0, 0, 0),
-			Color(1, 1, 1)),
-		VertexPositionColor(
-			Vector3(800, 600, 0),
-			Color(1, 1, 1))
-	);
+
+	//m_batch->DrawLine(
+	//	VertexPositionColor(
+	//		Vector3(0, 0, 0),
+	//		Color(1, 1, 1)),
+	//	VertexPositionColor(
+	//		Vector3(800, 600, 0),
+	//		Color(1, 1, 1))
+	//);
 
 	// 三角形を描画する処理
 	VertexPositionColor v1(Vector3(0.5f, 0.5f, 0.5f), Colors::Yellow);
