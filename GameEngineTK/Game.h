@@ -12,6 +12,7 @@
 #include <SimpleMath.h>
 #include <Model.h>
 #include "DebugCamera.h"
+#include <Keyboard.h>
 
 
 // A basic game implementation that creates a D3D11 device and
@@ -92,6 +93,8 @@ private:
 	std::unique_ptr<DirectX::Model> m_skydomeModel;
 	std::unique_ptr<DirectX::Model> m_PRACTICALballModel;
 	std::unique_ptr<DirectX::Model> m_ballModel;
+	std::unique_ptr<DirectX::Model> m_robotModel;
+
 
 	std::unique_ptr<DirectX::Model> m_potModel;
 
@@ -106,4 +109,13 @@ private:
 	//* 天球ズの回転量
 	float rollingAmount;
 
+	//* キーボードの登録的なサムシング
+	std::unique_ptr<DirectX::Keyboard> keyboard;
+
+	//* 自機（ロボット）の座標
+	DirectX::SimpleMath::Vector3 robot_pos;
+	//* 自機（ロボット）の回転角
+	DirectX::SimpleMath::Vector3 robot_angle;
+	//* ロボットのワールド行列
+	DirectX::SimpleMath::Matrix m_robotWorld;
 };

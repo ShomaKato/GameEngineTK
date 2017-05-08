@@ -104,7 +104,15 @@ void Game::Initialize(HWND window, int width, int height)
 		(L"Resources\\edfPot.cmo"),
 		*m_factory);
 
+	// ロボモデルの読み込み
+	m_robotModel = Model::CreateFromCMO(m_d3dDevice.Get(),
+		(L"Resources\\robot.cmo"),
+		*m_factory);
+
 	rollingAmount = 0.0f;
+
+	// キーボードの初期化
+	keyboard = std::make_unique<Keyboard>();
 
 	//=====ここまでで、初期化設定は完了=====//
 }
@@ -216,6 +224,64 @@ void Game::Update(DX::StepTimer const& timer)
 		//* 1フレームごとにある程度回す
 		rollingAmount += 0.05f;
 	}
+
+	//=======================================ロボット============================================//
+
+	Keyboard::State g_key = keyboard->GetState();
+
+	// Wキーが押されたら前進
+	if (g_key.W)
+	{
+		// 移動量のベクトル(1フレームごとの速度)
+		Vector3 moveV(0.0f, 0.0f, -0.1f);
+
+		//* 移動量ベクトルを、自機の角度に合わせる（向いてる方向に前進させる）
+		// 回転具合を持ってくる必要がある
+		Matrix rotRobot = Matrix::CreateRotationY(robot_angle.y);
+		// TransformNormalは、ベクトル(moveV)*行列(rotRobot)、で平行移動を無視するもの。
+		// つまり第一引数分の大きさを、第二引数分の角度で移動させることができる。
+		moveV = Vector3::TransformNormal(moveV, rotRobot);
+		// 第二引数の平行移動は無視されるので、この場合rotRobotの代わりにm_robotWorldでも可。
+
+		// 自機の座標を移動させる
+		robot_pos += moveV;
+	}
+	// Sキーが押されたら後退
+	if (g_key.S)
+	{
+		// 移動量のベクトル(1フレームごとの速度)
+		Vector3 moveV(0.0f, 0.0f, 0.1f);
+
+		//* 移動量ベクトルを、自機の角度に合わせる（向いてる方向に前進させる）
+		Matrix rotRobot = Matrix::CreateRotationY(robot_angle.y);
+		// Wと同じ処理
+		moveV = Vector3::TransformNormal(moveV, rotRobot);
+
+		// 自機の座標を移動させる
+		robot_pos += moveV;
+	}
+	// Aキーが押されたら左旋回
+	if (g_key.A)
+	{
+		// 自機の方向（方位角）を変える
+		Vector3 rote(0.0f, 0.1f, 0.0f);
+		// 自機の角度を変える
+		robot_angle += rote;
+	}
+	// Dキーが押されたら右旋回
+	if (g_key.D)
+	{
+		// 自機の方向（方位角）を変える
+		Vector3 rote(0.0f, -0.1f, 0.0f);
+		// 自機の角度を変える
+		robot_angle += rote;
+	}
+
+	// ワールド行列を計算
+	Matrix transRobot = Matrix::CreateTranslation(robot_pos);
+	Matrix rotRobot = Matrix::CreateRotationY(robot_angle.y);
+	// 座標移動だけ考えてるのでとりあえずぶち込む
+	m_robotWorld = rotRobot * transRobot;
 }
 
 // Draws the scene.
@@ -278,15 +344,23 @@ void Game::Render()
 	//		m_proj);
 	//}
 
-	// ティーポットも二十個並べ隊
-	for (int i = 0; i < 20; i++)
-	{
-		m_potModel->Draw(m_d3dContext.Get(),
+	//// ティーポットも二十個並べ隊
+	//for (int i = 0; i < 20; i++)
+	//{
+	//	m_potModel->Draw(m_d3dContext.Get(),
+	//		m_states,
+	//		m_potWorld[i],
+	//		m_view,
+	//		m_proj);
+	//}
+
+	// ロボットモデルの描画
+	m_robotModel->Draw(m_d3dContext.Get(),
 			m_states,
-			m_potWorld[i],
+			m_robotWorld,
 			m_view,
 			m_proj);
-	}
+
 
 	m_batch->Begin();
 
