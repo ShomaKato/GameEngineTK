@@ -201,21 +201,20 @@ void Game::Update(DX::StepTimer const& timer)
 	for (int i = 0; i < 20; i++)
 	{
 		//* 回転
-		Matrix rotPotZ = Matrix::CreateRotationZ(0.0f);
-		Matrix rotPotX = Matrix::CreateRotationX(0.0f);
-		Matrix rotPotY = Matrix::CreateRotationY(XMConvertToRadians(rollingAmount));
-		Matrix rotPot = rotPotZ*rotPotX*rotPotY;
-
+		//Matrix rotPotZ = Matrix::CreateRotationZ(0.0f);			/* 数値が0=変化させなくていい、ならなくていいらしい */
+		//Matrix rotPotX = Matrix::CreateRotationX(0.0f);
+		Matrix rotPotY = Matrix::CreateRotationY(XMConvertToRadians(rand() % 360 + rollingAmount));
+		Matrix rotPot = rotPotY;
+		
 		//* 平行移動
-		transPot[i] = Matrix::CreateTranslation(cosf(rand() % 360 + 1) * 200,
+		transPot[i] = Matrix::CreateTranslation(cosf(rand() % 360 + 1) * 50,
 												0.0f, 
-												sinf(rand() % 360 + 1) * 200);
+												sinf(rand() % 360 + 1) * 50);
 
-		m_potWorld[i] = transPot[i] * rotPot;
+		m_potWorld[i] = rotPot * transPot[i];
 
 		//* 1フレームごとにある程度回す
-		rollingAmount += 0.01f;
-
+		rollingAmount += 0.05f;
 	}
 }
 
