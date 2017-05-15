@@ -12,6 +12,8 @@
 #include <SimpleMath.h>
 #include <Model.h>
 #include "DebugCamera.h"
+#include "Camera.h"
+#include "FollowCamera.h"
 #include <Keyboard.h>
 
 
@@ -118,4 +120,8 @@ private:
 	DirectX::SimpleMath::Vector3 robot_angle;
 	//* ロボットのワールド行列
 	DirectX::SimpleMath::Matrix m_robotWorld;
+
+
+	// 作ったカメラ
+	std::unique_ptr<FollowCamera> m_camera;
 };

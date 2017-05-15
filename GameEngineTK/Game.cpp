@@ -55,8 +55,7 @@ void Game::Initialize(HWND window, int width, int height)
 	m_proj = Matrix::CreatePerspectiveFieldOfView(XM_PI / 4.f,
 		float(m_outputWidth) / float(m_outputHeight),
 		0.1f,	
-		500.f)
-		;
+		500.f);
 
 
 	// ベーシックエフェクトの作成・初期化					
@@ -112,7 +111,11 @@ void Game::Initialize(HWND window, int width, int height)
 	rollingAmount = 0.0f;
 
 	// キーボードの初期化
-	keyboard = std::make_unique<Keyboard>();
+	keyboard = make_unique<Keyboard>();
+
+
+	// カメラの初期化
+	m_camera = make_unique<FollowCamera>(m_outputWidth,m_outputHeight);
 
 	//=====ここまでで、初期化設定は完了=====//
 }
@@ -141,7 +144,18 @@ void Game::Update(DX::StepTimer const& timer)
 	// デバックガメラを毎フレーム更新
 	m_debugCamera->Update();
 	// ビュー行列を取得
-	m_view = m_debugCamera->GetCameraMatrix();
+	//m_view = m_debugCamera->GetCameraMatrix();
+
+
+	// 自作カメラを毎フレーム更新し、ビュー行列,射影行列を受け取る
+	//m_camera->Update();
+	//m_view = m_camera->GetView();
+	//m_proj = m_camera->GetProj();
+	//// 自機にカメラがついてくる
+	//m_camera->SetEyepos(robot_pos);
+	//m_camera->SetRefpos(Vector3(0, 0, -100.0f));		/* eyeposとrefposが同じになるのでずらす */
+
+	/* 上記はゴム紐カメラが完成したので用済みである */
 
 	//=====================球のワールド行列を計算（アップデートでやる）==========================//
 
@@ -282,6 +296,38 @@ void Game::Update(DX::StepTimer const& timer)
 	Matrix rotRobot = Matrix::CreateRotationY(robot_angle.y);
 	// 座標移動だけ考えてるのでとりあえずぶち込む
 	m_robotWorld = rotRobot * transRobot;
+
+
+	{	/* あとで関数化するといいので、とりあえず区分けしとく */
+
+//		// ゴム紐カメラ設定			/* 自機の移動処理より後に行う */
+//		// 自機とカメラの距離
+//		const float CAMERA_DISTANCE = 5.0f;
+//		// 視点,参照点
+//		Vector3 eyepos, refpos;
+//
+//		// 自機の2m上を参照点に
+//		refpos = robot_pos + Vector3(0, 2.0f, 0);
+//		// 参照点と視点の差分ベクトル
+//		Vector3 cameraV(0, 0, CAMERA_DISTANCE);
+//
+//		// 自機の後ろに回り込むための回転行列を生成
+//		Matrix rotmat = Matrix::CreateRotationY(robot_angle.y);
+		
+//		// 差分ベクトルを回転させる
+//		cameraV = Vector3::TransformNormal(cameraV, rotmat);
+//		// 視点座標を計算
+//		eyepos = refpos + cameraV;
+
+		m_camera->SetTargetPos(robot_pos);
+		m_camera->SetTargetAngle(robot_angle.y);
+
+		m_camera->Update();	
+		m_view = m_camera->GetView();
+		m_proj = m_camera->GetProj();
+
+	}
+
 }
 
 // Draws the scene.
