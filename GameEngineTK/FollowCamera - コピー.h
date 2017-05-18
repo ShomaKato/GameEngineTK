@@ -15,7 +15,6 @@
 
 // ヘッダファイルのインクルード
 #include "Camera.h"
-#include <Keyboard.h>
 
 class FollowCamera :public Camera
 {
@@ -32,23 +31,12 @@ public:
 	// 追従対象の角度をセット
 	void SetTargetAngle(const float& targetAngle);
 
-
-
-	// キーボードをセット
-	void SetKeyboard(DirectX::Keyboard* keyboard);
-
-
 protected:		/* おそらくこれを継承することはないので、privateでもまあおｋ、とのこと */
 	// 追従対象の座標
 	DirectX::SimpleMath::Vector3 m_targetPos;
 	// 追従対象の回転角
 	float m_targetAngle;
 	
-	// キーボード（値だけもらってくる参照用）
-	DirectX::Keyboard* m_keyboard;
-	// TPF⇔FPSのトリガー処理用キーボードトラッカー
-	DirectX::Keyboard::KeyboardStateTracker m_keyboardTracker;
-	// トリガー
-	bool m_isFPS;
+
 };
 

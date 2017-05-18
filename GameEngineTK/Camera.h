@@ -37,9 +37,6 @@ public:
 	// 上方向ベクトルをセットするための関数
 	void SetUpvec(DirectX::SimpleMath::Vector3 Upvec);
 
-	//// ビュー行列を生成するための関数
-	//void SetViewMatrix();					/* 上三つを変更すれば、Updateで変わるので不要 */
-
 	// ビュー行列を取得する関数
 	const DirectX::SimpleMath::Matrix& GetView();
 	/* const参照渡しにしたほうが軽くなるらしい */
@@ -88,9 +85,9 @@ protected:
 
 	//*==============プロジェクション行列（カメラの調整用行列）
 
-	/* 垂直方向視野角（60度まで画面に収める、という意味に） */
+	/* 垂直方向視野角 */
 	float m_fovY;
-	/* 縦横の比率。float変換した横幅割る縦幅でおｋ？ */
+	/* 縦横の比率。float変換した横幅割る縦幅 */
 	float m_aspect;	
 	/* 手前の表示限界距離 */
 	float m_nearclip;	

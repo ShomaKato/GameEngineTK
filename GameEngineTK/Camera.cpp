@@ -51,7 +51,6 @@ Camera::Camera(int width, int height)
 	m_proj = Matrix::CreatePerspectiveFieldOfView(m_fovY, m_aspect, m_nearclip, m_farclip);
 }
 
-
 ////----------------------------------------------------------------------
 ////! @ä÷êîñºÅF~Camera
 ////!
@@ -130,7 +129,6 @@ void Camera::SetUpvec(Vector3 Upvec)
 {
 	m_Upvec = Upvec;
 }
-
 
 ////----------------------------------------------------------------------
 ////! @ä÷êîñºÅFGetViewMatrix

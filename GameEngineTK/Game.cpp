@@ -114,8 +114,12 @@ void Game::Initialize(HWND window, int width, int height)
 	keyboard = make_unique<Keyboard>();
 
 
+
 	// カメラの初期化
 	m_camera = make_unique<FollowCamera>(m_outputWidth,m_outputHeight);
+
+	//* カメラにキーボードを渡す
+	m_camera->SetKeyboard(keyboard.get());
 
 	//=====ここまでで、初期化設定は完了=====//
 }
