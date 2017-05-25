@@ -64,7 +64,7 @@ void FollowCamera::Update()		/* 自機の移動処理より先に行う */
 	//=======================カメラ処理==========================//
 	if (!m_isFPS)
 	{
-		// TPSカメラ設定
+		// トリガーがfalseならTPSカメラ設定
 		// 視点,参照点			/* 視点は「カメラ位置」　参照点は「カメラが中央に捉える位置」 */
 		Vector3 eyepos, refpos;
 
@@ -111,7 +111,7 @@ void FollowCamera::Update()		/* 自機の移動処理より先に行う */
 
 	if (m_isFPS)
 	{
-
+		// トリガーがtrueならFPSカメラ設定
 		// 視点,参照点
 		Vector3 eyepos, refpos;
 

@@ -42,20 +42,36 @@ void Game::Initialize(HWND window, int width, int height)
     */
 
 	// 初期化はここに追加する
+
+	// 5/22  //
+	// キーボードの初期化
+	keyboard = make_unique<Keyboard>();
+	// カメラの初期化
+	m_camera = make_unique<FollowCamera>(m_outputWidth, m_outputHeight);
+	//* カメラにキーボードを渡す
+	m_camera->SetKeyboard(keyboard.get());
+
+	// 3Dオブジェクトの型
+	Obj3d::InitializeStatic(m_d3dDevice, m_d3dContext, m_camera.get());
+
+
+
+
+
 	// プリミティブバッチの作成
 	m_effect = std::make_unique<BasicEffect>(m_d3dDevice.Get());					/* unique_ptrはスマートポインタの一種。deleteを自動でやってくれる */		
-																					/* Get()は、ユニークポインタを普通のポインタに変換するための関数 */
+																					/* get()は、ユニークポインタを普通のポインタに変換するための関数 */
 
-	// ワールド行列の初期化？		/* 追記：Identifyは単位行列。まあつまり初期化でおｋ */
-	m_world = Matrix::Identity;
+	//// ワールド行列の初期化？		/* 追記：Identifyは単位行列。まあつまり初期化でおｋ */
+	//m_world = Matrix::Identity;
 
-	// ビュー行列と射影行列の設定
-	m_view = Matrix::CreateLookAt(Vector3(2.f, 2.f, 2.f),
-		Vector3::Zero, Vector3::UnitY);
-	m_proj = Matrix::CreatePerspectiveFieldOfView(XM_PI / 4.f,
-		float(m_outputWidth) / float(m_outputHeight),
-		0.1f,	
-		500.f);
+	//// ビュー行列と射影行列の設定
+	//m_view = Matrix::CreateLookAt(Vector3(2.f, 2.f, 2.f),
+	//	Vector3::Zero, Vector3::UnitY);
+	//m_proj = Matrix::CreatePerspectiveFieldOfView(XM_PI / 4.f,
+	//	float(m_outputWidth) / float(m_outputHeight),
+	//	0.1f,	
+	//	500.f);
 
 
 	// ベーシックエフェクトの作成・初期化					
@@ -88,10 +104,14 @@ void Game::Initialize(HWND window, int width, int height)
 	m_groundModel = Model::CreateFromCMO(m_d3dDevice.Get(), 
 									L"Resources\\ground200m.cmo", 
 									*m_factory);	
-	// 天球モデルの読み込み
-	m_skydomeModel = Model::CreateFromCMO(m_d3dDevice.Get(),
-		L"Resources\\SkyDome.cmo",
-		*m_factory);
+	//// 天球モデルの読み込み
+	//m_skydomeModel = Model::CreateFromCMO(m_d3dDevice.Get(),
+	//	L"Resources\\SkyDome.cmo",
+	//	*m_factory);
+
+	// 天球モデル（Obj3d型）の読み込み
+	m_skydomeModel->LoadModel(L"Resources\\SkyDome.cmo");
+
 
 	// 球並べるやつ・20回読み込む
 	m_ballModel = Model::CreateFromCMO(m_d3dDevice.Get(),
@@ -103,23 +123,21 @@ void Game::Initialize(HWND window, int width, int height)
 		(L"Resources\\edfPot.cmo"),
 		*m_factory);
 
-	// ロボモデルの読み込み
+	// 自機モデルの読み込み
 	m_robotModel = Model::CreateFromCMO(m_d3dDevice.Get(),
 		(L"Resources\\robot.cmo"),
 		*m_factory);
 
 	rollingAmount = 0.0f;
 
-	// キーボードの初期化
-	keyboard = make_unique<Keyboard>();
 
 
-
-	// カメラの初期化
-	m_camera = make_unique<FollowCamera>(m_outputWidth,m_outputHeight);
-
-	//* カメラにキーボードを渡す
-	m_camera->SetKeyboard(keyboard.get());
+	//// 自機パーツの読み込み
+	//m_ObjPlayer1.resize(ROBOT_PARTS_NUM);
+	//m_ObjPlayer1[ROBOT_PARTS_HEAD].LoadModel(L"Resources/robot.cmo");
+	//m_ObjPlayer1[ROBOT_PARTS_BODY].LoadModel(L"Resources/robo_body.cmo");
+	//m_ObjPlayer1[ROBOT_PARTS_HIP].LoadModel(L"Resources/robo_hip.cmo");
+	//m_ObjPlayer1[ROBOT_PARTS_CRAWLER].LoadModel(L"Resources/robo_crawler.cmo");
 
 	//=====ここまでで、初期化設定は完了=====//
 }
@@ -147,6 +165,12 @@ void Game::Update(DX::StepTimer const& timer)
 
 	// デバックガメラを毎フレーム更新
 	m_debugCamera->Update();
+
+	m_skydomeModel->Update();
+
+
+
+
 	// ビュー行列を取得
 	//m_view = m_debugCamera->GetCameraMatrix();
 
@@ -243,7 +267,7 @@ void Game::Update(DX::StepTimer const& timer)
 		rollingAmount += 0.05f;
 	}
 
-	//=======================================ロボット============================================//
+	//=======================================ロボット（自機）============================================//
 
 	Keyboard::State g_key = keyboard->GetState();
 
@@ -295,11 +319,26 @@ void Game::Update(DX::StepTimer const& timer)
 		robot_angle += rote;
 	}
 
-	// ワールド行列を計算
-	Matrix transRobot = Matrix::CreateTranslation(robot_pos);
-	Matrix rotRobot = Matrix::CreateRotationY(robot_angle.y);
-	// 座標移動だけ考えてるのでとりあえずぶち込む
-	m_robotWorld = rotRobot * transRobot;
+	//// ワールド行列を計算
+	////* パーツ１（親）
+	//Matrix rotRobot = Matrix::CreateRotationY(robot_angle.y);
+	//Matrix transRobot = Matrix::CreateTranslation(robot_pos);
+	//// 座標移動だけ考えてるのでとりあえずぶち込む
+	//m_robotWorld = rotRobot * transRobot;
+
+	////* パーツ２（子）
+	//Matrix rotRobot2 = Matrix::CreateRotationZ(XM_PIDIV2/* π/2 */) * Matrix::CreateRotationY(0);
+	//Matrix transRobot2 = Matrix::CreateTranslation(Vector3(0, 0.5f, 0));
+	//// 座標移動だけ考えてるのでとりあえずぶち込む
+	//m_robotWorld2 = rotRobot2 * transRobot2 * m_robotWorld;
+	/* いつも通りスケーリング、回転、移動量を掛けた後で、
+	　 パーツ１と同じ動き（ワールド行列）を掛け合わせることで、
+	　 パーツ１に追従した動きにできる。*/
+
+	/* Obj3dですべてやることに */
+	m_ObjPlayer1.Draw();
+	m_ObjPlayer2.Draw();
+
 
 
 	{	/* あとで関数化するといいので、とりあえず区分けしとく */
@@ -332,6 +371,7 @@ void Game::Update(DX::StepTimer const& timer)
 
 	}
 
+
 }
 
 // Draws the scene.
@@ -354,12 +394,12 @@ void Game::Render()
 	m_d3dContext->OMSetDepthStencilState(m_states.DepthNone(), 0);
 	m_d3dContext->RSSetState(m_states.CullNone());
 
-	// ベーシックエフェクトに各行列をセット
-	m_effect->SetWorld(m_world);								/* ワールド行列さえあれば表示はされる。が、デバッグカメラ使用のためにビュー行列と射影行列も必要 */
-	m_effect->SetView(m_view);
-	m_effect->SetProjection(m_proj);
+	//// ベーシックエフェクトに各行列をセット
+	//m_effect->SetWorld(m_world);								/* ワールド行列さえあれば表示はされる。が、デバッグカメラ使用のためにビュー行列と射影行列も必要 */
+	//m_effect->SetView(m_view);
+	//m_effect->SetProjection(m_proj);
 
-	m_effect->Apply(m_d3dContext.Get());
+	//m_effect->Apply(m_d3dContext.Get());
 	m_d3dContext->IASetInputLayout(m_inputLayout.Get());
 
 
@@ -370,12 +410,16 @@ void Game::Render()
 		m_view, 
 		m_proj);
 
-	// 天球モデルの描画
-	m_skydomeModel->Draw(m_d3dContext.Get(),
-		m_states,
-		m_world,
-		m_view,
-		m_proj);
+	//// 天球モデルの描画
+	//m_skydomeModel->Draw(m_d3dContext.Get(),
+	//	m_states,
+	//	Matrix::Identity,
+	//	m_view,
+	//	m_proj);
+
+	// 天球モデル(Obj3d)の描画
+	m_skydomeModel->Draw();
+
 
 	//// ボールモデルの描画（練習）
 	//m_PRACTICALballModel->Draw(m_d3dContext.Get(),
@@ -404,12 +448,19 @@ void Game::Render()
 	//		m_proj);
 	//}
 
-	// ロボットモデルの描画
-	m_robotModel->Draw(m_d3dContext.Get(),
-			m_states,
-			m_robotWorld,
-			m_view,
-			m_proj);
+	//// 自機モデルの描画１
+	//m_robotModel->Draw(m_d3dContext.Get(),
+	//		m_states,
+	//		m_robotWorld,
+	//		m_view,
+	//		m_proj);
+
+	//// 自機モデルの描画２
+	//m_robotModel->Draw(m_d3dContext.Get(),
+	//	m_states,
+	//	m_robotWorld2,
+	//	m_view,
+	//	m_proj);
 
 
 	m_batch->Begin();

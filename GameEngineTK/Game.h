@@ -15,6 +15,8 @@
 #include "Camera.h"
 #include "FollowCamera.h"
 #include <Keyboard.h>
+#include <vector>
+#include "Obj3d.h"
 
 
 // A basic game implementation that creates a D3D11 device and
@@ -22,6 +24,16 @@
 class Game
 {
 public:
+
+	enum ROBOT_PARTS		/* 親になるパーツほど先に書くように */
+	{
+		ROBOT_PARTS_CRAWLER,
+		ROBOT_PARTS_HIP,
+		ROBOT_PARTS_BODY,
+		ROBOT_PARTS_HEAD,
+
+		ROBOT_PARTS_NUM		/* ここに置いとけば、これがパーツ数の総数に */
+	};
 
     Game();
 
@@ -79,8 +91,8 @@ private:
 	std::unique_ptr<DirectX::BasicEffect> m_effect;
 	Microsoft::WRL::ComPtr<ID3D11InputLayout> m_inputLayout;
 
-	//* 描画用行列のメンバ変数
-	DirectX::SimpleMath::Matrix m_world;
+	////* 描画用行列のメンバ変数
+	//DirectX::SimpleMath::Matrix m_world;
 	DirectX::SimpleMath::Matrix m_view;
 	DirectX::SimpleMath::Matrix m_proj;
 
@@ -92,10 +104,13 @@ private:
 	std::unique_ptr<DirectX::EffectFactory> m_factory;
 	//* モデル			/* モデルの容れ物 */
 	std::unique_ptr<DirectX::Model> m_groundModel;
-	std::unique_ptr<DirectX::Model> m_skydomeModel;
+	//std::unique_ptr<DirectX::Model> m_skydomeModel;
 	std::unique_ptr<DirectX::Model> m_PRACTICALballModel;
 	std::unique_ptr<DirectX::Model> m_ballModel;
 	std::unique_ptr<DirectX::Model> m_robotModel;
+
+	// 手始めに天球を、作ったクラスの型にしてみる
+	Obj3d* m_skydomeModel;
 
 
 	std::unique_ptr<DirectX::Model> m_potModel;
@@ -116,10 +131,18 @@ private:
 
 	//* 自機（ロボット）の座標
 	DirectX::SimpleMath::Vector3 robot_pos;
-	//* 自機（ロボット）の回転角
+	//* 自機の回転角
 	DirectX::SimpleMath::Vector3 robot_angle;
-	//* ロボットのワールド行列
-	DirectX::SimpleMath::Matrix m_robotWorld;
+	////* 自機のワールド行列１
+	//DirectX::SimpleMath::Matrix m_robotWorld;	
+	////* 自機のワールド行列２
+	//DirectX::SimpleMath::Matrix m_robotWorld2;
+
+	// プレイヤの3Dオブジェクト
+	Obj3d m_ObjPlayer1;
+	Obj3d m_ObjPlayer2;
+	//std::vector<Obj3d> m_Obj3dPlayer;		/* パーツモデルをひとまとめにできる。が複雑なので後で */
+
 
 
 	// 作ったカメラ
