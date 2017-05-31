@@ -55,7 +55,7 @@ private:
 
 public:
 	Obj3d();	/* 全部セッターゲッターで受け取るので、デフォルトコンストラクタでおｋ */
-	~Obj3d();
+	//~Obj3d();
 
 	// モデルをロード
 	void LoadModel(const wchar_t* fileName);	/* ファイル名はCreateFromCMOの引数をパクる */

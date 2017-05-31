@@ -88,10 +88,10 @@ Obj3d::Obj3d()
 	m_parent = nullptr;
 }
 
-
-Obj3d::~Obj3d()
-{
-}
+//
+//Obj3d::~Obj3d()
+//{
+//}
 
 void Obj3d::LoadModel(const wchar_t * fileName)
 {
@@ -145,7 +145,7 @@ void Obj3d::Draw()
 	{
 		m_model->Draw(m_d3dContext.Get(),
 			*m_states,
-			Matrix::Identity,
+			m_world,
 			m_camera->GetView(),
 			m_camera->GetProj());
 	}

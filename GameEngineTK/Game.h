@@ -29,6 +29,8 @@ public:
 	{
 		ROBOT_PARTS_CRAWLER,
 		ROBOT_PARTS_HIP,
+		ROBOT_PARTS_RWING,
+		ROBOT_PARTS_LWING,
 		ROBOT_PARTS_BODY,
 		ROBOT_PARTS_HEAD,
 
@@ -96,8 +98,8 @@ private:
 	DirectX::SimpleMath::Matrix m_view;
 	DirectX::SimpleMath::Matrix m_proj;
 
-	//* デバッグカメラ
-	std::unique_ptr<DebugCamera> m_debugCamera;
+	////* デバッグカメラ
+	//std::unique_ptr<DebugCamera> m_debugCamera;
 
 
 	//* エフェクトファクトリ
@@ -110,7 +112,7 @@ private:
 	std::unique_ptr<DirectX::Model> m_robotModel;
 
 	// 手始めに天球を、作ったクラスの型にしてみる
-	Obj3d* m_skydomeModel;
+	Obj3d m_skydomeModel;
 
 
 	std::unique_ptr<DirectX::Model> m_potModel;
@@ -139,12 +141,21 @@ private:
 	//DirectX::SimpleMath::Matrix m_robotWorld2;
 
 	// プレイヤの3Dオブジェクト
-	Obj3d m_ObjPlayer1;
+	std::vector<Obj3d> m_ObjPlayer1;		/* vectorコンテナ。パーツモデルをひとまとめにできる */
 	Obj3d m_ObjPlayer2;
-	//std::vector<Obj3d> m_Obj3dPlayer;		/* パーツモデルをひとまとめにできる。が複雑なので後で */
 
-
+	// サイン用の引数となる角度
+	float m_sinAngle;
 
 	// 作ったカメラ
 	std::unique_ptr<FollowCamera> m_camera;
+
+
+	// キーボード（値だけもらってくる参照用）
+	DirectX::Keyboard* m_keyboard;
+	// TPF⇔FPSのトリガー処理用キーボードトラッカー
+	DirectX::Keyboard::KeyboardStateTracker m_keyboardTracker;
+	// 設置してるか否か
+	bool m_isLanding = true;
+
 };
