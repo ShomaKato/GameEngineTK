@@ -43,16 +43,24 @@ void Game::Initialize(HWND window, int width, int height)
 
 	// 初期化はここに追加する
 
-	// 5/22  //
 	// キーボードの初期化
 	keyboard = make_unique<Keyboard>();
+
 	// カメラの初期化
 	m_camera = make_unique<FollowCamera>(m_outputWidth, m_outputHeight);
 	//* カメラにキーボードを渡す
 	m_camera->SetKeyboard(keyboard.get());
-
 	// 3Dオブジェクトの静的メンバを初期化
 	Obj3d::InitializeStatic(m_d3dDevice, m_d3dContext, m_camera.get());
+
+	// プレイヤ-------------------------------------------------------
+	// プレイヤの生成
+	m_player = new Player();
+	// プレイヤにキーボードを渡す
+	m_player->SetKeyboard(keyboard.get());
+	// ---------------------------------------------------------------
+
+
 
 
 
@@ -132,85 +140,11 @@ void Game::Initialize(HWND window, int width, int height)
 
 
 
-	// 自機パーツの読み込み
-	m_ObjPlayer1.resize(ROBOT_PARTS_NUM);
-	m_ObjPlayer1[ROBOT_PARTS_CRAWLER].LoadModel(L"Resources/robo_crawler.cmo");
-	m_ObjPlayer1[ROBOT_PARTS_HIP].LoadModel(L"Resources/robo_hip.cmo");
-	m_ObjPlayer1[ROBOT_PARTS_RWING].LoadModel(L"Resources/robo_wing.cmo");
-	m_ObjPlayer1[ROBOT_PARTS_LWING].LoadModel(L"Resources/robo_wing.cmo");
-	m_ObjPlayer1[ROBOT_PARTS_BODY].LoadModel(L"Resources/robo_body.cmo");
-	m_ObjPlayer1[ROBOT_PARTS_HEAD].LoadModel(L"Resources/robot.cmo");
 
+	//// デバッグ文字用の材料の初期化
+	//// コモンステート作成
+	//m_state.reset(new CommonStates(g_pd3dDevice.Get()));
 
-	//* パーツの親子関係をセット
-	// 腰部の親をキャタピラに
-	m_ObjPlayer1[ROBOT_PARTS_HIP].SetParent(
-		&m_ObjPlayer1[ROBOT_PARTS_CRAWLER]);
-	// 胸部の親を腰部に
-	m_ObjPlayer1[ROBOT_PARTS_BODY].SetParent(
-		&m_ObjPlayer1[ROBOT_PARTS_HIP]);
-	// 両翼の親を胸部に
-	m_ObjPlayer1[ROBOT_PARTS_RWING].SetParent(
-		&m_ObjPlayer1[ROBOT_PARTS_BODY]);
-	m_ObjPlayer1[ROBOT_PARTS_LWING].SetParent(
-		&m_ObjPlayer1[ROBOT_PARTS_BODY]);
-	// 頭部の親を胸部に
-	m_ObjPlayer1[ROBOT_PARTS_HEAD].SetParent(
-		&m_ObjPlayer1[ROBOT_PARTS_BODY]);
-	
-
-	//* 親からのオフセット（座標のずらし分）をセット
-	//* 腰
-	// 座標調整
-	m_ObjPlayer1[ROBOT_PARTS_HIP].SetTranslation(
-		Vector3(0, 0.4f, 0));
-	// 角度調整
-	m_ObjPlayer1[ROBOT_PARTS_HIP].SetRotation(
-		Vector3(0, 0, 0));
-	// サイズ調整
-	m_ObjPlayer1[ROBOT_PARTS_HIP].SetScale(
-		Vector3(1, 1, 1));
-
-	//* 胸
-	// 座標調整
-	m_ObjPlayer1[ROBOT_PARTS_BODY].SetTranslation(
-		Vector3(0, 1.1f, 0));
-	// 角度調整
-	m_ObjPlayer1[ROBOT_PARTS_BODY].SetRotation(
-		Vector3(XMConvertToRadians(0.0f), XMConvertToRadians(0.0f), XMConvertToRadians(0.0f)));
-	// サイズ調整
-	m_ObjPlayer1[ROBOT_PARTS_BODY].SetScale(
-		Vector3(0.85f, 0.85f, 0.85f));
-
-	//* 右翼
-	// 座標調整
-	m_ObjPlayer1[ROBOT_PARTS_RWING].SetTranslation(
-		Vector3(0.5f, -0.3f, 0.85f));
-	// 角度調整	/* Z(上から奥)→Y(右から正面)→X(左から左下)の順で回転？ */ 展開はX
-	m_ObjPlayer1[ROBOT_PARTS_RWING].SetRotation(
-		Vector3(XMConvertToRadians(-30.0f), XMConvertToRadians(-100.0f), XMConvertToRadians(110.0f)));
-	//* 左翼
-	// 座標調整
-	m_ObjPlayer1[ROBOT_PARTS_LWING].SetTranslation(
-		Vector3(-0.5f, -0.3f, 0.85f));
-	// 角度調整	/* Z(右から右上)→Y(右から正面)→X(左から左下)の順で回転？ */ 展開はX
-	m_ObjPlayer1[ROBOT_PARTS_LWING].SetRotation(
-		Vector3(XMConvertToRadians(-30.0f), XMConvertToRadians(100.0f), XMConvertToRadians(70.0f)));
-
-	//* 頭
-	// 座標調整
-	m_ObjPlayer1[ROBOT_PARTS_HEAD].SetTranslation(
-		Vector3(0, 0.9f, 0));
-	// 角度調整
-	m_ObjPlayer1[ROBOT_PARTS_HEAD].SetRotation(
-		Vector3(0, 0, 0));
-	// サイズ調整
-	m_ObjPlayer1[ROBOT_PARTS_HEAD].SetScale(
-		Vector3(0.85f, 0.85f, 0.85f));
-
-
-	// サイン用引数の初期化
-	m_sinAngle = 0.0f;
 
 	//=====ここまでで、初期化設定は完了=====//
 }
@@ -240,16 +174,16 @@ void Game::Update(DX::StepTimer const& timer)
 	//m_debugCamera->Update();
 
 
-
-	m_camera->SetTargetPos(m_ObjPlayer1[ROBOT_PARTS_CRAWLER].GetTranslation());
-	m_camera->SetTargetAngle(m_ObjPlayer1[ROBOT_PARTS_CRAWLER].GetRotation().y);
-
+	// プレイヤにカメラを渡す
+	m_camera->SetTargetPos(m_player->GetPlayerTranslation());
+	m_camera->SetTargetAngle(m_player->GetPlayerRotationY());
+	// カメラの更新処理
 	m_camera->Update();
 
 	m_skydomeModel.Update();
 
 
-
+	m_player->UpdatePlayer();
 
 	// ビュー行列を取得
 	//m_view = m_debugCamera->GetCameraMatrix();
@@ -353,8 +287,6 @@ void Game::Update(DX::StepTimer const& timer)
 
 	//=======================================ロボット（自機）============================================//
 
-	// キーボードの状態取得
-	Keyboard::State g_key = keyboard->GetState();
 
 	//* 自機のギミック
 	
@@ -372,76 +304,6 @@ void Game::Update(DX::StepTimer const& timer)
 
 	/* Rotationなら回転。Traislationなら発射（SetParentにnullptrしないとついてくる）。Scaleなら拡大縮小 */
 
-	//// キーボードの状態取得
-	//Keyboard::State keyboardstate = m_keyboard->GetState();
-	//m_keyboardTracker.Update(keyboardstate);
-
-	//// スペースキー押すと飛んだり墜ちたり
-	//if (m_keyboardTracker.IsKeyPressed(Keyboard::Keys::Space))
-	//{
-	//	// フラグを切り替え
-	//	m_isLanding = !m_isLanding;
-	//}
-
-	//if (m_isLanding)
-	//{
-	//	m_ObjPlayer1[ROBOT_PARTS_BODY].SetTranslation(
-	//		Vector3(0, 1.1f, 0));
-	//}
-	//if (!m_isLanding)
-	//{
-	//	m_ObjPlayer1[ROBOT_PARTS_BODY].SetTranslation(
-	//		Vector3(0, 2.1f, 0));
-	//}
-	//
-
-
-	// Aキーが押されていたら
-	if (g_key.A)
-	{
-		// 自機の角度を回転させる
-		//tank_angle += 0.03f;
-		float angle = m_ObjPlayer1[0].GetRotation().y;
-		m_ObjPlayer1[0].SetRotation(Vector3(0, angle + 0.03f, 0));
-	}
-
-	// Dキーが押されていたら
-	if (g_key.D)
-	{
-		// 自機の角度を回転させる
-		float angle = m_ObjPlayer1[0].GetRotation().y;
-		m_ObjPlayer1[0].SetRotation(Vector3(0, angle - 0.03f, 0));
-	}
-
-	// Wキーが押されていたら
-	if (g_key.W)
-	{
-		// 移動量のベクトル
-		Vector3 moveV(0, 0, -0.1f);
-		// 移動量ベクトルを自機の角度分回転させる
-		//moveV = Vector3::TransformNormal(moveV, tank_world);
-		float angle = m_ObjPlayer1[0].GetRotation().y;
-		Matrix rotmat = Matrix::CreateRotationY(angle);
-		moveV = Vector3::TransformNormal(moveV, rotmat);
-		// 自機の座標を移動させる
-		Vector3 pos = m_ObjPlayer1[0].GetTranslation();
-		m_ObjPlayer1[0].SetTranslation(pos + moveV);
-	}
-
-	// Sキーが押されていたら
-	if (g_key.S)
-	{
-		// 移動量のベクトル
-		Vector3 moveV(0, 0, +0.1f);
-		// 移動量ベクトルを自機の角度分回転させる
-		//moveV = Vector3::TransformNormal(moveV, tank_world);
-		float angle = m_ObjPlayer1[0].GetRotation().y;
-		Matrix rotmat = Matrix::CreateRotationY(angle);
-		moveV = Vector3::TransformNormal(moveV, rotmat);
-		// 自機の座標を移動させる
-		Vector3 pos = m_ObjPlayer1[0].GetTranslation();
-		m_ObjPlayer1[0].SetTranslation(pos + moveV);
-	}
 
 	//Keyboard::State g_key = keyboard->GetState();
 
@@ -565,16 +427,6 @@ void Game::Update(DX::StepTimer const& timer)
 
 	}
 
-
-
-	//* vectorコンテナのfor文
-	for (std::vector<Obj3d>::iterator it = m_ObjPlayer1.begin();
-		it != m_ObjPlayer1.end();
-		it++)
-	{
-		it->Update();
-	}
-
 }
 
 // Draws the scene.
@@ -665,13 +517,10 @@ void Game::Render()
 	//	m_view,
 	//	m_proj);
 
-	//* Obj3Dの自機モデルの描画
-	for (std::vector<Obj3d>::iterator it = m_ObjPlayer1.begin();
-		it != m_ObjPlayer1.end();
-		it++)
-	{
-		it->Draw();
-	}
+
+	// プレイヤクラスのオブジェクトの描画
+	m_player->RenderPlayer();
+
 
 	m_batch->Begin();
 

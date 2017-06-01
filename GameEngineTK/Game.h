@@ -8,6 +8,8 @@
 #include <PrimitiveBatch.h>
 #include <VertexTypes.h>
 #include <Effects.h>
+#include <SpriteBatch.h>
+#include <SpriteFont.h>
 #include <CommonStates.h>
 #include <SimpleMath.h>
 #include <Model.h>
@@ -17,6 +19,7 @@
 #include <Keyboard.h>
 #include <vector>
 #include "Obj3d.h"
+#include "Player.h"
 
 
 // A basic game implementation that creates a D3D11 device and
@@ -24,18 +27,6 @@
 class Game
 {
 public:
-
-	enum ROBOT_PARTS		/* 親になるパーツほど先に書くように */
-	{
-		ROBOT_PARTS_CRAWLER,
-		ROBOT_PARTS_HIP,
-		ROBOT_PARTS_RWING,
-		ROBOT_PARTS_LWING,
-		ROBOT_PARTS_BODY,
-		ROBOT_PARTS_HEAD,
-
-		ROBOT_PARTS_NUM		/* ここに置いとけば、これがパーツ数の総数に */
-	};
 
     Game();
 
@@ -140,22 +131,11 @@ private:
 	////* 自機のワールド行列２
 	//DirectX::SimpleMath::Matrix m_robotWorld2;
 
-	// プレイヤの3Dオブジェクト
-	std::vector<Obj3d> m_ObjPlayer1;		/* vectorコンテナ。パーツモデルをひとまとめにできる */
-	Obj3d m_ObjPlayer2;
 
-	// サイン用の引数となる角度
-	float m_sinAngle;
-
-	// 作ったカメラ
+	// カメラ
 	std::unique_ptr<FollowCamera> m_camera;
 
-
-	// キーボード（値だけもらってくる参照用）
-	DirectX::Keyboard* m_keyboard;
-	// TPF⇔FPSのトリガー処理用キーボードトラッカー
-	DirectX::Keyboard::KeyboardStateTracker m_keyboardTracker;
-	// 設置してるか否か
-	bool m_isLanding = true;
+	// プレイヤ
+	Player* m_player;
 
 };
