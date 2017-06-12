@@ -23,6 +23,8 @@ class Player
 
 	// キーボードの情報
 	DirectX::Keyboard* Keyboard;
+	// 一回分だけ反応してくれるトリガー処理用キーボードトラッカー
+	DirectX::Keyboard::KeyboardStateTracker keyboardTracker;
 
 	// 自機パーツ
 	enum ROBOT_PARTS
@@ -41,6 +43,8 @@ public:
 	Player();
 	~Player();
 
+	// 初期化関数
+	void InitializePlayer();
 	// 更新関数
 	void UpdatePlayer();
 	// 描画関数
@@ -51,11 +55,22 @@ public:
 	// 参照点を受け取る関数
 	const DirectX::SimpleMath::Vector3 GetPlayerTranslation();
 	// 視点を受け取る関数
-	float GetPlayerRotationY();
+	float GetPlayerRotationY();	
+	// 弾丸（任意のパーツ）を発射する関数
+	void FireBullet();
+	// 弾丸を再装填（パーツをリセット）する関数
+	void ResetBullet();
 
 
 	// 接地してるか否か
 	bool m_isLanding = true;
 	// sin用引数
 	float m_sinAngle;
+
+
+	// 弾を発射したか否か
+	bool isEmpty;
+	// 弾丸の速度ベクトル
+	DirectX::SimpleMath::Vector3 m_BulletV;
+
 };

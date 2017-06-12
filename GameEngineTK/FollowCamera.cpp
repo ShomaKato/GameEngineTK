@@ -41,6 +41,8 @@ FollowCamera::FollowCamera(int width, int height)
 	m_keyboard = nullptr;
 
 	m_isFPS = false;
+
+	m_player = nullptr;
 }
 
 void FollowCamera::Update()		/* 自機の移動処理より先に行う */
@@ -59,6 +61,13 @@ void FollowCamera::Update()		/* 自機の移動処理より先に行う */
 		m_isFPS = !m_isFPS;
 	}
 
+	//=======================プレイヤ処理==========================//
+	if (m_player)
+	{
+		// 目標座標の設定
+		SetTargetPos(m_player->GetPlayerTranslation());
+		SetTargetAngle(m_player->GetPlayerRotationY());
+	}
 
 
 	//=======================カメラ処理==========================//
@@ -137,12 +146,6 @@ void FollowCamera::Update()		/* 自機の移動処理より先に行う */
 	}
 
 	//============================================================//
-
-
-
-
-	//this->SetEyepos(eyepos);	/* 元はm_cameraの関数を～という意味だが、*/
-	//this->SetRefpos(refpos);	/* それは今この関数なので、thisで代用可。実はthis->は省略可 */
 
 	// 基底クラスの更新
 	Camera::Update();

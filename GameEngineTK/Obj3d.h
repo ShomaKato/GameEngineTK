@@ -72,7 +72,11 @@ public:
 	void SetScale(DirectX::SimpleMath::Vector3&	scale) { m_scale = scale; }
 
 	// 回転角(Z,Y,X)
-	void SetRotation(DirectX::SimpleMath::Vector3& rotation) { m_rotation = rotation; }
+	void SetRotation(DirectX::SimpleMath::Vector3& rotation) { m_rotation = rotation; m_UseQuaternion = false; }
+	//*(6/12) 回転角(クォータニオン)
+	void SetRotationQ(DirectX::SimpleMath::Quaternion& rotation) { m_rotationQ = rotation; m_UseQuaternion = true; }
+	/* オイラー角ならm_UseQuaternionをfalseに。クォータニオンならtrueに */
+
 
 	// 平行移動(X,Y,Z)
 	void SetTranslation(DirectX::SimpleMath::Vector3& translation) { m_translation = translation; }
@@ -105,8 +109,12 @@ private:
 	// スケーリング(XYZ)
 	DirectX::SimpleMath::Vector3	m_scale;	/* Vector3は最初から(0,0,0)が入ってるので、 */
 												/* scaleだけは初期化で変えないとまずい。 */
-	// 回転角(Z,Y,X)
+	// 回転角(Z,Y,X、オイラー角)
 	DirectX::SimpleMath::Vector3	m_rotation;
+	//*(6/12) 回転角（クォータニオン）			/* 直観的な回転を可能にしてくれる */
+	DirectX::SimpleMath::Quaternion m_rotationQ;
+	// クォータニオンを使用してるか、オイラー角を使用しているか
+	bool m_UseQuaternion;
 
 	// 平行移動(X,Y,Z)
 	DirectX::SimpleMath::Vector3	m_translation;

@@ -57,6 +57,9 @@ Obj3d::Obj3d()
 
 	// 親の3Dオブジェクトをまずは空にしておく
 	m_parent = nullptr;
+
+	// 最初はオイラー角で角度を計算
+	m_UseQuaternion = false;
 }
 
 
@@ -108,13 +111,25 @@ void Obj3d::Update()
 	// スケーリング行列
 	Matrix scalemat = Matrix::CreateScale(m_scale);
 
+
+	// ↓のif文のrotmatをif文の上で宣言しとけば、さらにその下で使っても怒られない
+	Matrix rotmat;
 	// 回転行列
-	/* それぞれの回転分が引数 */
-	Matrix rotmatZ = Matrix::CreateRotationZ(m_rotation.z);
-	Matrix rotmatX = Matrix::CreateRotationX(m_rotation.x);
-	Matrix rotmatY = Matrix::CreateRotationY(m_rotation.y);
-												
-	Matrix rotmat = rotmatZ * rotmatX * rotmatY;
+	if (m_UseQuaternion)
+	{	// クォータニオンで回転を計算
+		rotmat = Matrix::CreateFromQuaternion(m_rotationQ);
+	}
+	else
+	{	// オイラー角で回転を計算（Z→X→Y）
+		/* それぞれの回転分が引数 */
+		Matrix rotmatZ = Matrix::CreateRotationZ(m_rotation.z);
+		Matrix rotmatX = Matrix::CreateRotationX(m_rotation.x);
+		Matrix rotmatY = Matrix::CreateRotationY(m_rotation.y);
+
+		//* 元々ここで宣言していたがスケール化に伴って上での宣言に
+		rotmat = rotmatZ * rotmatX * rotmatY;
+	}
+
 
 	// 平行移動行列
 	Matrix transmat = Matrix::CreateTranslation(m_translation);

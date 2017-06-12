@@ -58,6 +58,17 @@ void Game::Initialize(HWND window, int width, int height)
 	m_player = new Player();
 	// プレイヤにキーボードを渡す
 	m_player->SetKeyboard(keyboard.get());
+	// ---------------------------------------------------------------	
+	// エネミ-------------------------------------------------------
+	//// エネミ入りコンテナの生成(指定の数だけ)
+	//m_enemy.resize(ENEMY_NUM);
+	//// vectorコンテナのfor文
+	//for (std::vector<std::unique_ptr<Enemy>>::iterator it = m_enemy.begin();
+	//	it != m_enemy.end();
+	//	it++)
+	//{
+	//	it->InitializeEnemy();
+	//}
 	// ---------------------------------------------------------------
 
 
@@ -175,15 +186,25 @@ void Game::Update(DX::StepTimer const& timer)
 
 
 	// プレイヤにカメラを渡す
-	m_camera->SetTargetPos(m_player->GetPlayerTranslation());
-	m_camera->SetTargetAngle(m_player->GetPlayerRotationY());
+	//m_camera->SetTargetPos(m_player->GetPlayerTranslation());
+	//m_camera->SetTargetAngle(m_player->GetPlayerRotationY());
+	/* せっかくなので、上処理をカメラ内で行う */
+	m_camera->SetPlayer(m_player);
+
 	// カメラの更新処理
 	m_camera->Update();
 
 	m_skydomeModel.Update();
 
-
+	// プレイヤの更新
 	m_player->UpdatePlayer();
+	//// エネミの更新
+	//for (std::vector<Enemy>::iterator it = m_enemy.begin();
+	//	it != m_enemy.end();
+	//	it++)
+	//{
+	//	it->UpdateEnemy();
+	//}
 
 	// ビュー行列を取得
 	//m_view = m_debugCamera->GetCameraMatrix();
@@ -520,6 +541,13 @@ void Game::Render()
 
 	// プレイヤクラスのオブジェクトの描画
 	m_player->RenderPlayer();
+	//// vectorコンテナのfor文
+	//for (std::vector<Enemy>::iterator it = m_enemy.begin();
+	//	it != m_enemy.end();
+	//	it++)
+	//{
+	//	it->RenderEnemy();
+	//}
 
 
 	m_batch->Begin();

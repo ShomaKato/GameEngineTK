@@ -16,6 +16,7 @@
 // ヘッダファイルのインクルード
 #include "Camera.h"
 #include <Keyboard.h>
+#include "Player.h"
 
 class FollowCamera :public Camera
 {
@@ -33,9 +34,11 @@ public:
 	void SetTargetAngle(const float& targetAngle);
 
 
-
 	// キーボードをセット
 	void SetKeyboard(DirectX::Keyboard* keyboard);
+
+	// プレイヤをセット		/* プレイヤがいるなら視点、追従対象の角度をUpdateで行う */
+	void SetPlayer(Player* player) { m_player = player; }
 
 
 protected:		/* おそらくこれを継承することはないので、privateでもまあおｋ、とのこと */
@@ -50,5 +53,8 @@ protected:		/* おそらくこれを継承することはないので、privateでもまあおｋ、とのこ
 	DirectX::Keyboard::KeyboardStateTracker m_keyboardTracker;
 	// トリガー
 	bool m_isFPS;
+
+	// プレイヤ
+	Player* m_player;	/* 既にGameにいるプレイヤを差すための変数 */
 };
 

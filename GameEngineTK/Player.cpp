@@ -29,7 +29,35 @@ using namespace DirectX::SimpleMath;
 ////----------------------------------------------------------------------
 Player::Player()
 {
+	// 初期化関数
+	InitializePlayer();
+}
 
+
+////----------------------------------------------------------------------
+////! @関数名：~Player
+////!
+////! @役割：プレイヤクラスのデストラクタ
+////!
+////! @引数：存在しない
+////!
+////! @戻り値：存在しない
+////----------------------------------------------------------------------
+Player::~Player()
+{
+}
+
+////----------------------------------------------------------------------
+////! @関数名：UpdatePlayer
+////!
+////! @役割：毎フレームの更新処理
+////!
+////! @引数：なし(void)
+////!
+////! @戻り値：なし(void)
+////----------------------------------------------------------------------
+void Player::InitializePlayer()
+{
 	// 自機パーツの読み込み
 	player.resize(ROBOT_PARTS_NUM);
 	player[ROBOT_PARTS_CRAWLER].LoadModel(L"Resources/robo_crawler.cmo");
@@ -92,7 +120,7 @@ Player::Player()
 	// 座標調整
 	player[ROBOT_PARTS_LWING].SetTranslation(
 		Vector3(-0.5f, -.4f, 0.85f));
-	// 角度調整	/* Z(右から右上)→Y(右から正面)→X(左から左下)の順で回転？ */ 展開はX
+	// 角度調整	/* Z(腕が回転)→X(仰角)→Y(西か東か)の順で回転？ */ つまり翼展開はX
 	player[ROBOT_PARTS_LWING].SetRotation(
 		Vector3(XMConvertToRadians(-30.0f), XMConvertToRadians(100.0f), XMConvertToRadians(70.0f)));
 
@@ -114,20 +142,8 @@ Player::Player()
 	// サイン用引数の初期化
 	m_sinAngle = 0.0f;
 
-}
-
-
-////----------------------------------------------------------------------
-////! @関数名：~Player
-////!
-////! @役割：プレイヤクラスのデストラクタ
-////!
-////! @引数：存在しない
-////!
-////! @戻り値：存在しない
-////----------------------------------------------------------------------
-Player::~Player()
-{
+	// 弾丸を発射しているか否か
+	isEmpty = false;
 }
 
 ////----------------------------------------------------------------------
@@ -141,11 +157,15 @@ Player::~Player()
 ////----------------------------------------------------------------------
 void Player::UpdatePlayer()
 {
+	// 押されているキーを検索
 	Keyboard::State key = Keyboard->GetState();
+	// キーボードの状態取得（トリガー用）
+	Keyboard::State keyboardstate = Keyboard->GetState();
+	keyboardTracker.Update(keyboardstate);
 
 
-	// スペースキー押すと飛んだり墜ちたり
-	if (key.Space)
+	// Zキー押すと飛んだり墜ちたり
+	if (keyboardTracker.IsKeyPressed(Keyboard::Keys::Z))
 	{
 		// フラグを切り替え
 		m_isLanding = !m_isLanding;
@@ -153,10 +173,10 @@ void Player::UpdatePlayer()
 
 	if (m_isLanding)
 	{
+		// 飛んでないなら元の位置に戻す
 		player[ROBOT_PARTS_BODY].SetTranslation(
 			Vector3(0, 1.1f, 0));
 
-		// 飛んでないなら元の位置に戻す
 		player[ROBOT_PARTS_RWING].SetTranslation(
 			Vector3(0.5f, -0.3f, 0.85f));
 		player[ROBOT_PARTS_RWING].SetRotation(
@@ -241,6 +261,24 @@ void Player::UpdatePlayer()
 		player[0].SetTranslation(pos + moveV);
 	}
 
+
+	// スペースキーで頭ドーン
+	if (keyboardTracker.IsKeyPressed(Keyboard::Keys::Space))
+	{
+		// 頭ドーンしてないなら頭ドーン
+		if (!isEmpty)
+		{
+			isEmpty = !isEmpty;
+			FireBullet();
+		}
+		else
+		// 頭ドーンしてるなら頭帰還 
+		{
+			isEmpty = !isEmpty;
+			ResetBullet();
+		}
+	}
+
 	// vectorコンテナのfor文で、全パーツの更新処理を行う
 	for (std::vector<Obj3d>::iterator it = player.begin();
 		it != player.end();
@@ -249,6 +287,14 @@ void Player::UpdatePlayer()
 		it->Update();
 	}
 
+
+	// 弾丸を前進させる
+	if(isEmpty)
+	{	/* Wキーで前進、からパクったもの */
+		// 自機の座標を移動させる
+		Vector3 pos = player[ROBOT_PARTS_HEAD].GetTranslation();
+		player[ROBOT_PARTS_HEAD].SetTranslation(pos + m_BulletV);
+	}
 }
 
 ////----------------------------------------------------------------------
@@ -274,7 +320,7 @@ void Player::RenderPlayer()
 ////----------------------------------------------------------------------
 ////! @関数名：SetKeyboard
 ////!
-////! @役割：キーボードの情報を渡す関数
+////! @役割：キーボードを渡す関数
 ////!
 ////! @引数：入力されたキー情報(Keyboard* key)
 ////!
@@ -296,7 +342,7 @@ void Player::SetKeyboard(DirectX::Keyboard * key)
 ////----------------------------------------------------------------------
 const DirectX::SimpleMath::Vector3 Player::GetPlayerTranslation()
 {
-	return player[0].GetTranslation();
+	return player[ROBOT_PARTS_CRAWLER].GetTranslation();
 }
 
 ////----------------------------------------------------------------------
@@ -310,5 +356,72 @@ const DirectX::SimpleMath::Vector3 Player::GetPlayerTranslation()
 ////----------------------------------------------------------------------
 float Player::GetPlayerRotationY()
 {
-	return player[0].GetRotation().y;
+	return player[ROBOT_PARTS_CRAWLER].GetRotation().y;
+}
+
+
+
+
+
+////----------------------------------------------------------------------
+////! @関数名：FireBullet
+////!
+////! @役割：パーツを弾丸として発射する
+////!
+////! @引数：なし(void)
+////!
+////! @戻り値：なし(void)
+////----------------------------------------------------------------------
+void Player::FireBullet()
+{
+	// 発射するパーツのワールド行列を作成
+	Matrix worldm = player[ROBOT_PARTS_HEAD].GetWorld();
+
+	// 元々のワールド行列から各要素を抽出
+	Vector3 scale;			/* ワールドスケーリング */
+	Quaternion rotation;	/* ワールド回転。クォータニオンで */
+	Vector3 translation;	/* ワールド座標 */
+	// 抽出関数（Decompose超便利）
+	worldm.Decompose(scale, rotation, translation);
+
+	// 発射パーツと体部分の親子関係の解除
+	player[ROBOT_PARTS_HEAD].SetParent(nullptr);	/* 親が空＝親無し　で解除に */
+	// 解除された瞬間に元々のサイズ、位置、角度を与える
+	player[ROBOT_PARTS_HEAD].SetScale(scale);
+	player[ROBOT_PARTS_HEAD].SetRotationQ(rotation);
+	player[ROBOT_PARTS_HEAD].SetTranslation(translation);
+
+	// 弾丸の速度を設定
+	m_BulletV = Vector3(0, 0, -0.1f);	/* Z軸にマイナスなら、プレイヤの向いてる方向に発射 */
+	m_BulletV = Vector3::Transform(m_BulletV, rotation);
+
+}
+
+////----------------------------------------------------------------------
+////! @関数名：ResetBullet
+////!
+////! @役割：発射したパーツを元に戻す
+////!
+////! @引数：なし(void)
+////!
+////! @戻り値：なし(void)
+////----------------------------------------------------------------------
+void Player::ResetBullet()
+{
+	// 資料と違うが、こうじゃないと逆にエラー
+	player[ROBOT_PARTS_HEAD].SetParent(&player[ROBOT_PARTS_BODY]);
+
+
+	// Initializeから初期位置をパクる
+	// 座標調整
+	player[ROBOT_PARTS_HEAD].SetTranslation(
+		Vector3(0, 0.9f, 0));
+	// 角度調整
+	player[ROBOT_PARTS_HEAD].SetRotation(
+		Vector3(0, 0, 0));
+	// サイズ調整
+	player[ROBOT_PARTS_HEAD].SetScale(
+		Vector3(0.85f, 0.85f, 0.85f));
+
+
 }

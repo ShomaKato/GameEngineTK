@@ -20,7 +20,10 @@
 #include <vector>
 #include "Obj3d.h"
 #include "Player.h"
+#include "Enemy.h"
 
+
+static const int ENEMY_NUM = 5;
 
 // A basic game implementation that creates a D3D11 device and
 // provides a game loop.
@@ -136,6 +139,12 @@ private:
 	std::unique_ptr<FollowCamera> m_camera;
 
 	// プレイヤ
-	Player* m_player;
+	Player* m_player;	/* ユニークポインタの方が統一性があるかも */
 
+	// エネミ(たくさん欲しいのでベクターコンテナちゃん)
+	//std::vector<Enemy> m_enemy;
+	std::vector<std::unique_ptr<Enemy>> m_enemy;
+
+	/* コンテナの中にただのエネミーだと、デフォルトコンストラクタがなくてエラー。
+	   ユニークポインタならそれがいらないので大丈夫、らしい */
 };
