@@ -148,11 +148,21 @@ void Enemy::InitializeEnemy()
 	pos.z = rand() % 10;
 
 	// 一秒タイマーの初期化
-	m_timer = 60;
+	m_Timer = 60;
 
 	// 目標角度の初期化
 	m_DistAngle = 0.0f;
 
+
+
+	//// 6/19
+	//{
+	//	// 当たり判定を設置
+	//	m_collisionNode.Initialize();
+	//	// 当たり判定の表示非表示フラグをOFF
+		//isCollisionVisible = false;
+	//}
+	m_collisionNode.Initialize();
 }
 
 ////----------------------------------------------------------------------
@@ -166,122 +176,74 @@ void Enemy::InitializeEnemy()
 ////----------------------------------------------------------------------
 void Enemy::UpdateEnemy()
 {
-
-	//// スペースキー押すと飛んだり墜ちたり
-	//if (key.Space)
-	//{
-	//	// フラグを切り替え
-	//	m_isLanding = !m_isLanding;
-	//}
-
-	//if (m_isLanding)
-	//{
-	//	// 飛んでないなら元の位置に戻す
-	//	enemy[ROBOT_PARTS_BODY].SetTranslation(
-	//		Vector3(0, 1.1f, 0));
-
-	//	enemy[ROBOT_PARTS_RWING].SetTranslation(
-	//		Vector3(0.5f, -0.3f, 0.85f));
-	//	enemy[ROBOT_PARTS_RWING].SetRotation(
-	//		Vector3(XMConvertToRadians(-30.0f), XMConvertToRadians(-100.0f), XMConvertToRadians(110.0f)));
-	//	enemy[ROBOT_PARTS_RWING].SetScale(
-	//		Vector3(1, 1, 1));
-
-	//	enemy[ROBOT_PARTS_LWING].SetTranslation(
-	//		Vector3(-0.5f, -0.3f, 0.85f));
-	//	enemy[ROBOT_PARTS_LWING].SetRotation(
-	//		Vector3(XMConvertToRadians(-30.0f), XMConvertToRadians(100.0f), XMConvertToRadians(70.0f)));
-	//	enemy[ROBOT_PARTS_LWING].SetScale(
-	//		Vector3(1, 1, 1));
-
-	//}
-	//if (!m_isLanding)
-	//{
-	//	// 飛んでいるなら位置と角度を変更
-	//	m_sinAngle += 0.05f;
-
-	//	enemy[ROBOT_PARTS_BODY].SetTranslation(
-	//		Vector3(0, 2.1f + (sinf(m_sinAngle) / 10), 0));
-
-	//	enemy[ROBOT_PARTS_RWING].SetTranslation(
-	//		Vector3(1.5f, 0.6f, 0.9f));
-	//	enemy[ROBOT_PARTS_RWING].SetRotation(
-	//		Vector3(XMConvertToRadians(30.0f), XMConvertToRadians(-100.0f), XMConvertToRadians(110.0f)));
-	//	enemy[ROBOT_PARTS_RWING].SetScale(
-	//		Vector3(1.2f, 1.2f, 1.2f));
-	//	enemy[ROBOT_PARTS_LWING].SetTranslation(
-	//		Vector3(-1.5f, 0.6f, 0.9f));
-	//	enemy[ROBOT_PARTS_LWING].SetRotation(
-	//		Vector3(XMConvertToRadians(30.0f), XMConvertToRadians(100.0f), XMConvertToRadians(70.0f)));
-	//	enemy[ROBOT_PARTS_LWING].SetScale(
-	//		Vector3(1.2f, 1.2f, 1.2f));
-	//}
-
-
-	//// Aキーが押されていたら
-	//if (key.A)
-	//{
-	//	// 自機の角度を回転させる
-	//	//tank_angle += 0.03f;
-	//	float angle = enemy[0].GetRotation().y;
-	//	enemy[0].SetRotation(Vector3(0, angle + 0.03f, 0));
-	//}
-
-	//// Dキーが押されていたら
-	//if (key.D)
-	//{
-	//	// 自機の角度を回転させる
-	//	float angle = enemy[0].GetRotation().y;
-	//	enemy[0].SetRotation(Vector3(0, angle - 0.03f, 0));
-	//}
-
-	//// Wキーが押されていたら
-	//if (key.W)
-	//{
-	//	// 移動量のベクトル
-	//	Vector3 moveV(0, 0, -0.1f);
-	//	// 移動量ベクトルを自機の角度分回転させる
-	//	//moveV = Vector3::TransformNormal(moveV, tank_world);
-	//	float angle = enemy[0].GetRotation().y;
-	//	Matrix rotmat = Matrix::CreateRotationY(angle);
-	//	moveV = Vector3::TransformNormal(moveV, rotmat);
-	//	// 自機の座標を移動させる
-	//	Vector3 pos = enemy[0].GetTranslation();
-	//	enemy[0].SetTranslation(pos + moveV);
-	//}
-
-	//// Sキーが押されていたら
-	//if (key.S)
-	//{
-	//	// 移動量のベクトル
-	//	Vector3 moveV(0, 0, +0.1f);
-	//	// 移動量ベクトルを自機の角度分回転させる
-	//	float angle = enemy[0].GetRotation().y;
-	//	Matrix rotmat = Matrix::CreateRotationY(angle);
-	//	moveV = Vector3::TransformNormal(moveV, rotmat);
-	//	// 自機の座標を移動させる
-	//	Vector3 pos = enemy[0].GetTranslation();
-	//	enemy[0].SetTranslation(pos + moveV);
-	//}
-
-
-
-	// AI
-	m_timer--;
-	if (m_timer < 0)
+	// AI		/* 先生の丸パクリなので、よく研究しておくこと */
+	m_Timer--;
+	if (m_Timer < 0)
 	{
-		// カウントが0に達したら
-		m_timer = 60;
-
-		// 目標角度を変更
+		m_Timer = 60;
+		// -0.5～+0.5の乱数
 		float rnd = (float)rand() / RAND_MAX - 0.5f;
 		rnd *= 180.0f;
-		
+
+		rnd = XMConvertToRadians(rnd);
+
+		m_DistAngle += rnd;
+	}
+
+	{
+		// 自機の角度を回転させる
+		Vector3 rotv = enemy[0].GetRotation();
+
+		float angle = m_DistAngle - rotv.y;
+
+		// 180度を超えていた場合、逆回りの方が近い
+		if (angle > XM_PI)
+		{
+			angle -= XM_2PI;
+		}
+
+		if (angle < -XM_PI)
+		{
+			angle += XM_2PI;
+		}
+
+		// 補間
+		rotv.y += angle * 0.05f;
+
+		SetRot(rotv);
+	}
+
+	// 機体が向いている方向に進む
+	{
+		// 移動量のベクトル
+		Vector3 moveV(0, 0, -0.1f);
+		// 移動量ベクトルを自機の角度分回転させる
+		//moveV = Vector3::TransformNormal(moveV, tank_world);
+		float angle = enemy[0].GetRotation().y;
+		Matrix rotmat = Matrix::CreateRotationY(angle);
+		moveV = Vector3::TransformNormal(moveV, rotmat);
+		// 自機の座標を移動させる
+		Vector3 pos = enemy[0].GetTranslation();
+		enemy[0].SetTranslation(pos + moveV);
 	}
 
 
 
+	Calc();
 
+}
+
+////----------------------------------------------------------------------
+////! @関数名：Calc
+////!
+////! @役割：オブジェクトを描画する
+////!
+////! @引数：なし(void)
+////!
+////! @戻り値：なし(void)
+////----------------------------------------------------------------------
+void Enemy::Calc()
+{
 	// vectorコンテナのfor文で、全パーツの更新処理を行う
 	for (std::vector<Obj3d>::iterator it = enemy.begin();
 		it != enemy.end();
@@ -290,6 +252,17 @@ void Enemy::UpdateEnemy()
 		it->Update();
 	}
 
+	// 6/19
+	{
+		// 当たり判定を設置
+		m_collisionNode.Update();
+		// 当たり判定を弾丸モデルに親子付
+		m_collisionNode.SetParent(&enemy[ROBOT_PARTS_BODY]);
+		m_collisionNode.SetTrans(Vector3(0, 0.5f, 0));		/* 好きな位置に直す */
+		m_collisionNode.SetLocalRadius(1.5f);				/* 好きな大きさに直す */
+
+
+	}
 }
 
 ////----------------------------------------------------------------------
@@ -310,5 +283,44 @@ void Enemy::RenderEnemy()
 	{
 		it->Draw();
 	}
+
+
+	//// 6/19
+	//if (isCollisionVisible)
+	//{
+	//	// 弾丸用の当たり判定を設置
+	//	m_collisionNode.Draw();
+	//}
+	m_collisionNode.Draw();
 }
 
+
+const DirectX::SimpleMath::Vector3& Enemy::GetTrans()
+{
+	// タンクパーツの座標を返す
+	return enemy[0].GetTranslation();
+}
+
+const DirectX::SimpleMath::Vector3 & Enemy::GetRot()
+{
+	// タンクパーツの回転を返す
+	return enemy[0].GetRotation();
+}
+
+void Enemy::SetTrans(const DirectX::SimpleMath::Vector3& trans)
+{
+	// タンクパーツの座標を設定
+	enemy[0].SetTranslation(trans);
+}
+
+void Enemy::SetRot(const DirectX::SimpleMath::Vector3& rot)
+{
+	// タンクパーツの座標を設定
+	enemy[0].SetRotation(rot);
+}
+
+const DirectX::SimpleMath::Matrix& Enemy::GetLocalWorld()
+{
+	// タンクパーツのワールド行列を返す
+	return enemy[0].GetWorld();
+}

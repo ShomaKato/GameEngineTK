@@ -14,6 +14,7 @@
 
 // ヘッダのインクルード
 #include "Obj3d.h"
+#include "CollisionNode.h"
 
 class Enemy
 {
@@ -33,6 +34,10 @@ class Enemy
 		ROBOT_PARTS_NUM
 	};
 
+
+	// 6/19 当たり判定モデルの読み込み・弾丸用の当たり判定
+	SphereNode m_collisionNode;
+
 public:
 	Enemy();
 	~Enemy();
@@ -41,8 +46,27 @@ public:
 	void InitializeEnemy();
 	// 更新関数
 	void UpdateEnemy();
+	// 行列更新
+	void Calc();
 	// 描画関数
 	void RenderEnemy();
+
+
+	// 座標を取得
+	const DirectX::SimpleMath::Vector3& GetTrans();
+	// 回転を取得
+	const DirectX::SimpleMath::Vector3& GetRot();
+	// 座標を設定
+	void SetTrans(const DirectX::SimpleMath::Vector3& trans);
+	// 回転を設定
+	void SetRot(const DirectX::SimpleMath::Vector3& rot);
+
+	/* SetTransとSetRotの引数のconstを消したらエラーが消えた */
+	/* ↑その二つは継承関数。継承元にconstがついてなかったためエラーだった */
+
+	// ワールド行列を取得
+	const DirectX::SimpleMath::Matrix& GetLocalWorld();
+
 
 	// 接地してるか否か
 	bool m_isLanding = true;
@@ -51,7 +75,14 @@ public:
 
 
 	// タイマー
-	int m_timer;
+	int m_Timer;
 	// 角度の変更
 	float m_DistAngle;
+
+
+	// 6/19
+	// 当たり判定(とりあえず球型)を取得
+	const SphereNode& GetCollisionNodeBullet() { return m_collisionNode; }
+	// 当たり判定の表示非表示フラグ
+	bool isCollisionVisible;
 };

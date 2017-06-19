@@ -163,6 +163,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Collision.h" />
+    <ClInclude Include="CollisionNode.h" />
     <ClInclude Include="DebugCamera.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="FollowCamera.h" />
@@ -174,6 +176,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Collision.cpp" />
+    <ClCompile Include="CollisionNode.cpp" />
     <ClCompile Include="DebugCamera.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="FollowCamera.cpp" />
@@ -213,6 +217,7 @@
     <MeshContentTask Include="Assets\robo_hip.FBX" />
     <MeshContentTask Include="Assets\robo_wing.FBX" />
     <MeshContentTask Include="Assets\SkyDome.FBX" />
+    <MeshContentTask Include="Assets\SphereNode.FBX" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

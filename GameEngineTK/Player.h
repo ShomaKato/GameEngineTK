@@ -15,6 +15,7 @@
 // ヘッダのインクルード
 #include <Keyboard.h>
 #include "Obj3d.h"
+#include "CollisionNode.h"
 
 class Player
 {
@@ -38,6 +39,9 @@ class Player
 
 		ROBOT_PARTS_NUM
 	};
+
+	// 6/19 当たり判定モデルの読み込み・弾丸用の当たり判定
+	SphereNode m_collisionNodeBullet;
 
 public:
 	Player();
@@ -72,5 +76,13 @@ public:
 	bool isEmpty;
 	// 弾丸の速度ベクトル
 	DirectX::SimpleMath::Vector3 m_BulletV;
+	// 弾丸発射秒数のカウント変数
+	int cntFiring;
 
+
+	// 6/19
+	// 弾丸用当たり判定を取得
+	const SphereNode& GetCollisionNodeBullet() { return m_collisionNodeBullet; }
+	// 当たり判定の表示非表示フラグ
+	bool isCollisionVisible;
 };

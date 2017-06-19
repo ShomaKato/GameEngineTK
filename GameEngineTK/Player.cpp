@@ -136,7 +136,7 @@ void Player::InitializePlayer()
 	player[ROBOT_PARTS_HEAD].SetScale(
 		Vector3(0.85f, 0.85f, 0.85f));
 
-	// キーボードを初期化する
+	// キーボードの初期化
 	Keyboard = nullptr;
 
 	// サイン用引数の初期化
@@ -144,6 +144,16 @@ void Player::InitializePlayer()
 
 	// 弾丸を発射しているか否か
 	isEmpty = false;
+
+
+
+	// 6/19
+	{
+		// 弾丸用の当たり判定を設置
+		m_collisionNodeBullet.Initialize();
+		// 当たり判定の表示非表示フラグをOFF
+		isCollisionVisible = false;
+	}
 }
 
 ////----------------------------------------------------------------------
@@ -262,6 +272,7 @@ void Player::UpdatePlayer()
 	}
 
 
+
 	// スペースキーで頭ドーン
 	if (keyboardTracker.IsKeyPressed(Keyboard::Keys::Space))
 	{
@@ -279,6 +290,15 @@ void Player::UpdatePlayer()
 		}
 	}
 
+
+	// 6/19
+	if (keyboardTracker.IsKeyPressed(Keyboard::Keys::O))
+	{
+		// Oキー押したら当たり判定の表示非表示フラグをOFF
+		isCollisionVisible = !isCollisionVisible;
+	}
+
+
 	// vectorコンテナのfor文で、全パーツの更新処理を行う
 	for (std::vector<Obj3d>::iterator it = player.begin();
 		it != player.end();
@@ -294,6 +314,18 @@ void Player::UpdatePlayer()
 		// 自機の座標を移動させる
 		Vector3 pos = player[ROBOT_PARTS_HEAD].GetTranslation();
 		player[ROBOT_PARTS_HEAD].SetTranslation(pos + m_BulletV);
+	}
+
+
+	// 6/19
+	{
+		// 弾丸用の当たり判定を設置
+		m_collisionNodeBullet.Update();
+		// 弾丸の当たり判定を弾丸モデルに親子付
+		m_collisionNodeBullet.SetParent(&player[ROBOT_PARTS_HEAD]);
+		m_collisionNodeBullet.SetTrans(Vector3(0, 0.5f, 0));		/* 好きな位置に直す */
+		m_collisionNodeBullet.SetLocalRadius(0.6f);					/* 好きな大きさに直す */
+
 	}
 }
 
@@ -314,6 +346,13 @@ void Player::RenderPlayer()
 		it++)
 	{
 		it->Draw();
+	}
+
+	if (isCollisionVisible)
+	// 6/19
+	{
+		// 弾丸用の当たり判定を設置
+		m_collisionNodeBullet.Draw();
 	}
 }
 
@@ -363,6 +402,8 @@ float Player::GetPlayerRotationY()
 
 
 
+
+
 ////----------------------------------------------------------------------
 ////! @関数名：FireBullet
 ////!
@@ -392,7 +433,7 @@ void Player::FireBullet()
 	player[ROBOT_PARTS_HEAD].SetTranslation(translation);
 
 	// 弾丸の速度を設定
-	m_BulletV = Vector3(0, 0, -0.1f);	/* Z軸にマイナスなら、プレイヤの向いてる方向に発射 */
+	m_BulletV = Vector3(0, 0, -0.3f);	/* Z軸にマイナスなら、プレイヤの向いてる方向に発射 */
 	m_BulletV = Vector3::Transform(m_BulletV, rotation);
 
 }

@@ -72,14 +72,14 @@ public:
 	void SetScale(DirectX::SimpleMath::Vector3&	scale) { m_scale = scale; }
 
 	// 回転角(Z,Y,X)
-	void SetRotation(DirectX::SimpleMath::Vector3& rotation) { m_rotation = rotation; m_UseQuaternion = false; }
+	void SetRotation(const DirectX::SimpleMath::Vector3& rotation) { m_rotation = rotation; m_UseQuaternion = false; }
 	//*(6/12) 回転角(クォータニオン)
-	void SetRotationQ(DirectX::SimpleMath::Quaternion& rotation) { m_rotationQ = rotation; m_UseQuaternion = true; }
+	void SetRotationQ(const DirectX::SimpleMath::Quaternion& rotation) { m_rotationQ = rotation; m_UseQuaternion = true; }
 	/* オイラー角ならm_UseQuaternionをfalseに。クォータニオンならtrueに */
 
 
 	// 平行移動(X,Y,Z)
-	void SetTranslation(DirectX::SimpleMath::Vector3& translation) { m_translation = translation; }
+	void SetTranslation(const DirectX::SimpleMath::Vector3& translation) { m_translation = translation; }
 
 	// 親の3Dオブジェクトのポインタ
 	void SetParent(Obj3d* parent) { m_parent = parent; }

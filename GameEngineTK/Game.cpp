@@ -61,14 +61,13 @@ void Game::Initialize(HWND window, int width, int height)
 	// ---------------------------------------------------------------	
 	// エネミ-------------------------------------------------------
 	//// エネミ入りコンテナの生成(指定の数だけ)
-	//m_enemy.resize(ENEMY_NUM);
-	//// vectorコンテナのfor文
-	//for (std::vector<std::unique_ptr<Enemy>>::iterator it = m_enemy.begin();
-	//	it != m_enemy.end();
-	//	it++)
-	//{
-	//	it->InitializeEnemy();
-	//}
+	m_enemy.resize(ENEMY_NUM);
+	//* vectorコンテナのfor文だと「生成(make_unique)」を毎回行えないので×
+	for (int i = 0; i < ENEMY_NUM; i++)
+	{
+		m_enemy[i] = std::make_unique<Enemy>();
+		m_enemy[i]->InitializeEnemy();
+	}
 	// ---------------------------------------------------------------
 
 
@@ -198,13 +197,13 @@ void Game::Update(DX::StepTimer const& timer)
 
 	// プレイヤの更新
 	m_player->UpdatePlayer();
-	//// エネミの更新
-	//for (std::vector<Enemy>::iterator it = m_enemy.begin();
-	//	it != m_enemy.end();
-	//	it++)
-	//{
-	//	it->UpdateEnemy();
-	//}
+	// エネミの更新
+	for (std::vector<std::unique_ptr<Enemy>>::iterator it = m_enemy.begin();
+		it != m_enemy.end();
+		it++)
+	{
+		(*it)->UpdateEnemy();		/* 何かわからん。先生に訊こう */
+	}
 
 	// ビュー行列を取得
 	//m_view = m_debugCamera->GetCameraMatrix();
@@ -541,13 +540,13 @@ void Game::Render()
 
 	// プレイヤクラスのオブジェクトの描画
 	m_player->RenderPlayer();
-	//// vectorコンテナのfor文
-	//for (std::vector<Enemy>::iterator it = m_enemy.begin();
-	//	it != m_enemy.end();
-	//	it++)
-	//{
-	//	it->RenderEnemy();
-	//}
+	// vectorコンテナのfor文
+	for (std::vector<std::unique_ptr<Enemy>>::iterator it = m_enemy.begin();
+		it != m_enemy.end();
+		it++)
+	{
+		(*it)->RenderEnemy();
+	}
 
 
 	m_batch->Begin();
