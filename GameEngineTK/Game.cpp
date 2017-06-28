@@ -3,6 +3,7 @@
 //
 
 #include "pch.h"
+#include "ModelEffect.h"
 #include "Game.h"
 
 extern void ExitGame();
@@ -66,7 +67,9 @@ void Game::Initialize(HWND window, int width, int height)
 	for (int i = 0; i < ENEMY_NUM; i++)
 	{
 		m_enemy[i] = std::make_unique<Enemy>();
-		m_enemy[i]->InitializeEnemy();
+		m_enemy[i]->InitializeEnemy();	
+		// エネミにもキーボードを渡す
+		m_enemy[i]->SetKeyboard(keyboard.get());
 	}
 	// ---------------------------------------------------------------
 
@@ -202,8 +205,65 @@ void Game::Update(DX::StepTimer const& timer)
 		it != m_enemy.end();
 		it++)
 	{
-		(*it)->UpdateEnemy();		/* 何かわからん。先生に訊こう */
+		(*it)->UpdateEnemy();
 	}
+
+
+	{//* 6/22 敵が弾に当たったら死ぬ(プレイヤとエネミのアップデート直後が望ましい)
+	// 弾の当たり判定の球を受け取る
+		const Sphere& bulletSphere = m_player->GetCollisionNodeBullet();
+
+		// 敵の数ぶんだけfor文を回す(敵をベクターコンテナで管理してるのでちょっと資料と変わる)	
+		for (std::vector<std::unique_ptr<Enemy>>::iterator it = m_enemy.begin();
+			it != m_enemy.end();
+			/*it++*/)
+		{
+			// エネミーを取得？
+			Enemy* enemy = it->get();
+
+			// 敵の当たり判定の球を受け取る
+			const Sphere& enemySphere = enemy->GetCollisionNode();
+
+
+
+
+
+			// 弾の当たり判定球と敵の当たり判定球が衝突していたら
+			if (CheckSphere2Sphere(bulletSphere, enemySphere))
+			{
+
+				//* 6/26 消滅エフェクト
+				ModelEffectManager::getInstance()->Entry(
+					L"Resources/HitEffect.cmo",
+					10,
+					// 6/26 消滅エフェクトの座標 /* GetTrans関数で敵の座標を設定する */
+					enemy->GetTrans(),
+					Vector3(0, 0, 0),	// 速度
+					Vector3(0, 0, 0),	// 加速度
+					Vector3(0, 0, 0),	// 回転角（初期）
+					Vector3(0, 0, 0),	// 回転角（最終）
+					Vector3(0, 0, 0),	// スケール（初期）
+					Vector3(6, 6, 6)	// スケール（最終）
+
+				);
+				// 敵（ベクターコンテナ）を殺す
+				it = m_enemy.erase(it);				/* イレース関数でベクコンは消せる。 */
+				//* イレースした要素の次の要素を指すイテレーター。
+				/* こうしないと、itがイレース→もうitがないのに何に＋＋するの？　とエラーに */
+				/* ただし、この処理がそもそも＋＋と同意義なので、全てを消し終わったらエラーに */
+			}
+			else
+			{
+				/* 上記問題を解決するため、敵をイレースした時とそうでないときで処理を分け、*/
+				/* どちらでもit++する（イテレータを一つ進める）ように設定する */
+				it++;
+			}
+		}
+
+	}
+	
+	// 6/26 敵の消滅エフェクト
+	ModelEffectManager::getInstance()->Update();
 
 	// ビュー行列を取得
 	//m_view = m_debugCamera->GetCameraMatrix();
@@ -548,6 +608,7 @@ void Game::Render()
 		(*it)->RenderEnemy();
 	}
 
+	ModelEffectManager::getInstance()->Draw();
 
 	m_batch->Begin();
 
@@ -566,6 +627,9 @@ void Game::Render()
 	//VertexPositionColor v3(Vector3(-0.5f, -0.5f, 0.5f), Colors::Yellow);
 
 	//m_batch->DrawTriangle(v1, v2, v3);
+
+	// 敵の消滅エフェクト	/* 常に存在はしてて、敵が死んだら初めて出てくる感じっぽい */
+
 
 	m_batch->End();
 
@@ -652,7 +716,7 @@ void Game::CreateDevice()
     UINT creationFlags = 0;
 
 #ifdef _DEBUG
-    creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+    //creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
     static const D3D_FEATURE_LEVEL featureLevels [] =

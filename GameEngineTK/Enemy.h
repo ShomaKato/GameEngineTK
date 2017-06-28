@@ -13,6 +13,7 @@
 #pragma once
 
 // ヘッダのインクルード
+#include <Keyboard.h>
 #include "Obj3d.h"
 #include "CollisionNode.h"
 
@@ -20,6 +21,11 @@ class Enemy
 {
 	// パーツ一つ一つを格納するvector型コンテナ
 	std::vector<Obj3d> enemy;
+
+	// キーボードの情報
+	DirectX::Keyboard* Keyboard;
+	// 一回分だけ反応してくれるトリガー処理用キーボードトラッカー
+	DirectX::Keyboard::KeyboardStateTracker keyboardTracker;
 
 	// パーツ		/* 親であればあるほど先に */
 	enum ROBOT_PARTS
@@ -66,7 +72,8 @@ public:
 
 	// ワールド行列を取得
 	const DirectX::SimpleMath::Matrix& GetLocalWorld();
-
+	// キーボード情報を渡す関数
+	void SetKeyboard(DirectX::Keyboard* key);
 
 	// 接地してるか否か
 	bool m_isLanding = true;
@@ -82,7 +89,7 @@ public:
 
 	// 6/19
 	// 当たり判定(とりあえず球型)を取得
-	const SphereNode& GetCollisionNodeBullet() { return m_collisionNode; }
+	const SphereNode& GetCollisionNode() { return m_collisionNode; }
 	// 当たり判定の表示非表示フラグ
 	bool isCollisionVisible;
 };

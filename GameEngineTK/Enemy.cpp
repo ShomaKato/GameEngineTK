@@ -147,6 +147,8 @@ void Enemy::InitializeEnemy()
 	pos.x = rand() % 10;
 	pos.z = rand() % 10;
 
+	this->SetTrans(pos);
+
 	// 一秒タイマーの初期化
 	m_Timer = 60;
 
@@ -160,9 +162,11 @@ void Enemy::InitializeEnemy()
 	//	// 当たり判定を設置
 	//	m_collisionNode.Initialize();
 	//	// 当たり判定の表示非表示フラグをOFF
-		//isCollisionVisible = false;
+		isCollisionVisible = false;
 	//}
 	m_collisionNode.Initialize();
+	m_collisionNode.SetParent(&enemy[ROBOT_PARTS_BODY]);
+	//* 上のSetParentはupdateでのみ行っていたが、初期化でもやらないと当たり判定が初期原点に来てしまう。
 }
 
 ////----------------------------------------------------------------------
@@ -176,6 +180,12 @@ void Enemy::InitializeEnemy()
 ////----------------------------------------------------------------------
 void Enemy::UpdateEnemy()
 {
+	// 押されているキーを検索
+	Keyboard::State key = Keyboard->GetState();
+	// キーボードの状態取得（トリガー用）
+	Keyboard::State keyboardstate = Keyboard->GetState();
+	keyboardTracker.Update(keyboardstate);
+
 	// AI		/* 先生の丸パクリなので、よく研究しておくこと */
 	m_Timer--;
 	if (m_Timer < 0)
@@ -191,7 +201,7 @@ void Enemy::UpdateEnemy()
 	}
 
 	{
-		// 自機の角度を回転させる
+		// 角度を回転させる
 		Vector3 rotv = enemy[0].GetRotation();
 
 		float angle = m_DistAngle - rotv.y;
@@ -216,7 +226,7 @@ void Enemy::UpdateEnemy()
 	// 機体が向いている方向に進む
 	{
 		// 移動量のベクトル
-		Vector3 moveV(0, 0, -0.1f);
+		Vector3 moveV(0, 0, -0.05f);
 		// 移動量ベクトルを自機の角度分回転させる
 		//moveV = Vector3::TransformNormal(moveV, tank_world);
 		float angle = enemy[0].GetRotation().y;
@@ -227,6 +237,13 @@ void Enemy::UpdateEnemy()
 		enemy[0].SetTranslation(pos + moveV);
 	}
 
+
+	// 6/19
+	if (keyboardTracker.IsKeyPressed(Keyboard::Keys::O))
+	{
+		// Oキー押したら当たり判定の表示非表示フラグをOFF
+		isCollisionVisible = !isCollisionVisible;
+	}
 
 
 	Calc();
@@ -285,13 +302,12 @@ void Enemy::RenderEnemy()
 	}
 
 
-	//// 6/19
-	//if (isCollisionVisible)
-	//{
-	//	// 弾丸用の当たり判定を設置
-	//	m_collisionNode.Draw();
-	//}
-	m_collisionNode.Draw();
+	// 6/19
+	if (isCollisionVisible)
+	{
+		// 弾丸用の当たり判定を設置
+		m_collisionNode.Draw();
+	}
 }
 
 
@@ -323,4 +339,24 @@ const DirectX::SimpleMath::Matrix& Enemy::GetLocalWorld()
 {
 	// タンクパーツのワールド行列を返す
 	return enemy[0].GetWorld();
+}
+
+
+
+
+
+
+
+////----------------------------------------------------------------------
+////! @関数名：SetKeyboard
+////!
+////! @役割：キーボードを渡す関数
+////!
+////! @引数：入力されたキー情報(Keyboard* key)
+////!
+////! @戻り値：なし(void)
+////----------------------------------------------------------------------
+void Enemy::SetKeyboard(DirectX::Keyboard * key)
+{
+	Keyboard = key;
 }

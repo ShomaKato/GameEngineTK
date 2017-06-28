@@ -73,6 +73,34 @@ void SphereNode::Update()
 	m_obj.SetScale(Vector3(m_localRadius));	/* ローカル半径はvector3ではないので必要 */
 
 	m_obj.Update();
+
+
+
+
+	//* 6/22 このままだと敵が開始直後に原点に出てしまう判定なので、色々追加
+
+	{// ワールド座標での当たり判定球を計算
+		// 計算済みのワールド行列を取得
+		const Matrix worldm = m_obj.GetWorld();	/* GetWorldがコンストの値を受け取るものなので、*/
+												/* こっちもコンストにするとコピーにならず無駄が少ない */
+		// モデル座標系での中心点
+		Vector3 center(0, 0, 0);
+		// モデル座標系での球の右端		/* 右でなくてもいい。球の表面部分が一点だけほしい */
+		Vector3 right(1, 0, 0);
+
+		// ワールド座標に変換
+		center = Vector3::Transform(center, worldm);	/* 変換したい座標×ワールド座標でおｋ */
+		right = Vector3::Transform(right, worldm);
+		/* 上記の二点間の距離＝球の半径となる */
+
+		// 当たり判定球に結果を代入
+		Sphere::Center = center;	/* 大文字センターは、スフィアクラスの中心座標変数 */
+		Sphere::Radius = Vector3::Distance(center, right);	/* 半径は、上の二点間の距離 */
+
+		//* つまりワールド座標に変換した中心座標と半径があればいい
+
+		
+	}
 }
 
 ////----------------------------------------------------------------------
