@@ -20,6 +20,14 @@
 // 当たり判定の親ノード
 class CollisionNode
 {
+protected:
+	//(7/3) デバッグ表示フラグ・フラグのセッター、ゲッター
+	static bool m_debugVisible;
+public:
+	static void SetDebugVisible(bool flag) { m_debugVisible = flag; }
+	static bool GetDebugVisible() { return m_debugVisible; }
+
+
 public:		/* 当たり判定の共通機能はここに */
 	// 初期化
 	virtual void Initialize() = 0;	/* virtualつけて=0したら純粋仮想関数。中身は継承先に任せる */
@@ -58,7 +66,7 @@ public:
 
 	// 拡縮前の半径をセット
 	void SetLocalRadius(const float radius) { m_localRadius = radius; }
-	// 拡縮前の半径をセット
+
 
 protected:
 	// スケーリングで拡縮される前の当たり判定の半径

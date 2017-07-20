@@ -169,6 +169,8 @@
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="FollowCamera.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="LandShape.h" />
+    <ClInclude Include="LandShapeData.h" />
     <ClInclude Include="ModelEffect.h" />
     <ClInclude Include="Obj3d.h" />
     <ClInclude Include="pch.h" />
@@ -183,6 +185,8 @@
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="FollowCamera.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="LandShape.cpp" />
+    <ClCompile Include="LandShapeData.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="ModelEffect.cpp" />
     <ClCompile Include="Obj3d.cpp" />

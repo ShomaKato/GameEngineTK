@@ -59,7 +59,7 @@ public:
 	// 参照点を受け取る関数
 	const DirectX::SimpleMath::Vector3 GetPlayerTranslation();
 	// 視点を受け取る関数
-	float GetPlayerRotationY();	
+	float GetPlayerRotationY();
 	// 弾丸（任意のパーツ）を発射する関数
 	void FireBullet();
 	// 弾丸を再装填（パーツをリセット）する関数
@@ -85,4 +85,11 @@ public:
 	const SphereNode& GetCollisionNodeBullet() { return m_collisionNodeBullet; }
 	// 当たり判定の表示非表示フラグ
 	bool isCollisionVisible;
+
+
+	// 7/10　プレイヤにも全身当たり判定を
+	// 全身の当たり判定
+	SphereNode m_collisionNode;
+	// 当たり判定(とりあえず球型)を取得
+	const SphereNode& GetCollisionNode() { return m_collisionNode; }
 };

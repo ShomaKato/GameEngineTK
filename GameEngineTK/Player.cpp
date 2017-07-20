@@ -154,6 +154,14 @@ void Player::InitializePlayer()
 		// 当たり判定の表示非表示フラグをOFF
 		isCollisionVisible = false;
 	}
+
+	//// 7/10
+	// 当たり判定の表示非表示フラグをOFF
+	isCollisionVisible = false;
+
+	m_collisionNode.Initialize();
+	m_collisionNode.SetParent(&player[ROBOT_PARTS_BODY]);
+	//* 上のSetParentはupdateでのみ行っていたが、初期化でもやらないと当たり判定が初期原点に来てしまう。
 }
 
 ////----------------------------------------------------------------------
@@ -172,6 +180,19 @@ void Player::UpdatePlayer()
 	// キーボードの状態取得（トリガー用）
 	Keyboard::State keyboardstate = Keyboard->GetState();
 	keyboardTracker.Update(keyboardstate);
+
+
+
+
+	// 7/10	プレイヤにも全身当たり判定を
+	{
+		// 当たり判定を設置
+		m_collisionNode.Update();
+		// 当たり判定を弾丸モデルに親子付
+		m_collisionNode.SetParent(&player[ROBOT_PARTS_BODY]);
+		m_collisionNode.SetTrans(Vector3(0, 0.5f, 0));		/* 好きな位置に直す */
+		m_collisionNode.SetLocalRadius(1.5f);				/* 好きな大きさに直す */
+	}
 
 
 	// Zキー押すと飛んだり墜ちたり
@@ -353,7 +374,12 @@ void Player::RenderPlayer()
 	{
 		// 弾丸用の当たり判定を設置
 		m_collisionNodeBullet.Draw();
+
+		// 7/10
+		// 全身用の当たり判定を設置
+		m_collisionNode.Draw();
 	}
+
 }
 
 ////----------------------------------------------------------------------
@@ -397,6 +423,19 @@ float Player::GetPlayerRotationY()
 {
 	return player[ROBOT_PARTS_CRAWLER].GetRotation().y;
 }
+
+
+
+//void Player::SetPlayerTranslation(DirectX::SimpleMath::Vector3 trans)
+//{
+//	// タンクパーツの座標を設定
+//	player[0].SetTranslation(trans);
+//}
+//
+//void Player::SetPlayerRotationY(float rot)
+//{
+//
+//}
 
 
 

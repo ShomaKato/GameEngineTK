@@ -5,6 +5,7 @@
 #include "pch.h"
 #include "ModelEffect.h"
 #include "Game.h"
+#include "FollowCamera.h"
 
 extern void ExitGame();
 
@@ -51,8 +52,15 @@ void Game::Initialize(HWND window, int width, int height)
 	m_camera = make_unique<FollowCamera>(m_outputWidth, m_outputHeight);
 	//* カメラにキーボードを渡す
 	m_camera->SetKeyboard(keyboard.get());
-	// 3Dオブジェクトの静的メンバを初期化
+	// 3Dオブジェクトの静的メンバを初期化(Obj3dの共通初期化)
 	Obj3d::InitializeStatic(m_d3dDevice, m_d3dContext, m_camera.get());
+
+	//(7/3) 地形クラスの初期化(LandShapeの共通初期化)
+	LandShapeCommonDef lscDef;		//* こいつの設定をして、こいつを初期化関数の引数に使う
+	lscDef.pDevice = m_d3dDevice.Get();
+	lscDef.pDeviceContext = m_d3dContext.Get();
+	lscDef.pCamera = m_camera.get();
+	LandShape::InitializeCommon(lscDef);
 
 	// プレイヤ-------------------------------------------------------
 	// プレイヤの生成
@@ -124,7 +132,11 @@ void Game::Initialize(HWND window, int width, int height)
 	// 地面モデルの読み込み
 	m_groundModel = Model::CreateFromCMO(m_d3dDevice.Get(), 
 									L"Resources\\ground200m.cmo", 
-									*m_factory);	
+									*m_factory);
+
+	//(7/3) 地形データの読み込み	(LandShapeファイル名, CMOファイル名)
+	m_landshape.Initialize(L"ground200m", L"ground200m");
+
 	//// 天球モデルの読み込み
 	//m_skydomeModel = Model::CreateFromCMO(m_d3dDevice.Get(),
 	//	L"Resources\\SkyDome.cmo",
@@ -134,15 +146,15 @@ void Game::Initialize(HWND window, int width, int height)
 	m_skydomeModel.LoadModel(L"Resources/SkyDome.cmo");
 
 
-	// 球並べるやつ・20回読み込む
-	m_ballModel = Model::CreateFromCMO(m_d3dDevice.Get(),
-		(L"Resources\\ball.cmo"),
-		*m_factory);
+	//// 球並べるやつ・20回読み込む
+	//m_ballModel = Model::CreateFromCMO(m_d3dDevice.Get(),
+	//	(L"Resources\\ball.cmo"),
+	//	*m_factory);
 
-	// ティーポット並べるやつ・20回読み込む
-	m_potModel = Model::CreateFromCMO(m_d3dDevice.Get(),
-		(L"Resources\\edfPot.cmo"),
-		*m_factory);
+	//// ティーポット並べるやつ・20回読み込む
+	//m_potModel = Model::CreateFromCMO(m_d3dDevice.Get(),
+	//	(L"Resources\\edfPot.cmo"),
+	//	*m_factory);
 
 	// 自機モデルの読み込み
 	//m_robotModel = Model::CreateFromCMO(m_d3dDevice.Get(),
@@ -198,8 +210,60 @@ void Game::Update(DX::StepTimer const& timer)
 
 	m_skydomeModel.Update();
 
+	//(7/3) 地形データの更新
+	m_landshape.Update();
+
+
+
+	// 7/10
+	{// 自機の、地形へのめり込みを何とかする
+
+		// 自機の当たり判定球を取得
+		Sphere sphere = m_player->GetCollisionNode();
+		// 自機のワールド座標を取得
+		Vector3 trans = m_player->GetPlayerTranslation();
+		// 球の中心から自機センターへのベクトル
+		Vector3 sphere2player = trans - sphere.Center;
+
+		// めり込み排斥（こんだけめり込んだからこんだけ押し出すぞ、という値）ベクトル
+		Vector3 reject;
+		if (m_landshape.IntersectSphere(sphere, &reject))
+		{
+			// めり込みを解消するように（当たり判定球が）移動
+			sphere.Center += reject;
+		}
+
+		// めり込み解消移動をプレイヤそのものに合わせる
+		//m_player->SetTranslation(sphere.Center + sphere2player);
+	}
+
+
+
 	// プレイヤの更新
 	m_player->UpdatePlayer();
+
+
+	{// 自機が地面に立つ処理
+		Segment player_segment;
+		// 自機のワールド座標を取得
+		Vector3 trans = m_player->GetPlayerTranslation();
+		player_segment.Start = trans + Vector3(0, 1, 0);
+		player_segment.End = trans + Vector3(0, -0.5f, 0);
+
+		// 交点座標
+		Vector3 inter;
+
+		// 地形と線分の当たり判定（レイキャスティング）
+		if (m_landshape.IntersectSegment(player_segment, &inter))
+		{
+			// Y座標のみ、交点のに移動
+			trans.y = inter.y;
+		}
+
+		// 自機を移動
+		//m_player->SetPlayerTranslation(trans);
+	}
+
 	// エネミの更新
 	for (std::vector<std::unique_ptr<Enemy>>::iterator it = m_enemy.begin();
 		it != m_enemy.end();
@@ -538,12 +602,18 @@ void Game::Render()
 	m_d3dContext->IASetInputLayout(m_inputLayout.Get());
 
 
-	// 地面モデルの描画			/* cmoモデルはプリミティブバッチ不要 */
-	m_groundModel->Draw(m_d3dContext.Get(), 
-		m_states,
-		Matrix::Identity, 
-		m_view, 
-		m_proj);
+	//// 地面モデルの描画			/* cmoモデルはプリミティブバッチ不要 */
+	//m_groundModel->Draw(m_d3dContext.Get(), 
+	//	m_states,
+	//	Matrix::Identity, 
+	//	m_view, 
+	//	m_proj);
+
+	/* 下記に地面を任せるために地面モデルはコメントアウト */
+
+	//(7/3) 地形データの更新
+	m_landshape.Draw();
+
 
 	//// 天球モデルの描画
 	//m_skydomeModel->Draw(m_d3dContext.Get(),

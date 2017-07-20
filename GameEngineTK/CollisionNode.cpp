@@ -16,7 +16,9 @@
 
 // 名前空間
 using namespace DirectX::SimpleMath;
-
+// 静的メンバ変数
+bool CollisionNode::m_debugVisible = true;
+/* staticメンバ変数の作り方・staticは消す。グローバル関数みたいに書く。 */
 
 
 ////----------------------------------------------------------------------

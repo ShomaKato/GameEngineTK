@@ -80,9 +80,15 @@ public:
 
 	// 平行移動(X,Y,Z)
 	void SetTranslation(const DirectX::SimpleMath::Vector3& translation) { m_translation = translation; }
+	
+	// ワールド行列
+	void SetWorld(const DirectX::SimpleMath::Matrix& world) { m_world = world; }
 
 	// 親の3Dオブジェクトのポインタ
 	void SetParent(Obj3d* parent) { m_parent = parent; }
+
+	//==========================//
+
 
 	//==========getter==========//
 	// スケーリング(XYZ)

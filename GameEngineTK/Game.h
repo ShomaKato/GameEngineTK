@@ -21,6 +21,7 @@
 #include "Obj3d.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "LandShape.h"
 
 
 static const int ENEMY_NUM = 5;
@@ -147,4 +148,8 @@ private:
 
 	/* コンテナの中にただのエネミーだと、デフォルトコンストラクタがなくてエラー。
 	   ユニークポインタならそれがいらないので大丈夫、らしい */
+
+
+	//(7/3) 地形
+	LandShape m_landshape;
 };

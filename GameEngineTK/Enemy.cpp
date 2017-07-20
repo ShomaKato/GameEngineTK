@@ -277,8 +277,6 @@ void Enemy::Calc()
 		m_collisionNode.SetParent(&enemy[ROBOT_PARTS_BODY]);
 		m_collisionNode.SetTrans(Vector3(0, 0.5f, 0));		/* D‚«‚ÈˆÊ’u‚É’¼‚· */
 		m_collisionNode.SetLocalRadius(1.5f);				/* D‚«‚È‘å‚«‚³‚É’¼‚· */
-
-
 	}
 }
 

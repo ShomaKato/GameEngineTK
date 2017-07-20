@@ -54,5 +54,35 @@ public:
 };
 
 
+
+//* 休んでた分の先生の丸コピ
+// 法線付き三角形（反時計回りが表面） 
+class Triangle
+{
+public:
+	DirectX::SimpleMath::Vector3	P0;
+	DirectX::SimpleMath::Vector3	P1;
+	DirectX::SimpleMath::Vector3	P2;
+	DirectX::SimpleMath::Vector3	Normal;	// 法線ベクトル 
+};
+
+
+
 // グローバル関数
 bool CheckSphere2Sphere(const Sphere& sphereA, const Sphere& sphereB);
+
+void ComputeTriangle(const DirectX::SimpleMath::Vector3& _p0,
+					 const DirectX::SimpleMath::Vector3& _p1,
+					 const DirectX::SimpleMath::Vector3& _p2, 
+					 Triangle* _triangle);
+
+bool CheckSphere2Triangle(const Sphere& _sphere,
+						  const Triangle& _tri,
+						  DirectX::SimpleMath::Vector3* _inter);
+
+bool CheckPoint2Triangle(const DirectX::SimpleMath::Vector3& _point,
+						 const Triangle& _triangle);
+
+bool CheckSegment2Triangle(const Segment& _segment,
+	const Triangle& _triangle,
+	DirectX::SimpleMath::Vector3 *_inter);
